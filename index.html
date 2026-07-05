@@ -579,6 +579,25 @@ main().catch((err) =&gt; console.error(err));</code></pre>
   </div>
 </footer>
 
+<div class="fig-modal" id="figModal" aria-hidden="true">
+  <div class="fig-modal__backdrop" data-fig-close></div>
+  <div class="fig-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="figModalTitle">
+    <div class="fig-modal__bar">
+      <span class="fig-modal__title" id="figModalTitle">図の拡大表示</span>
+      <div class="fig-modal__ctrl">
+        <label for="figModalScale">表示倍率</label>
+        <select id="figModalScale">
+          <option value="100">100%</option>
+          <option value="150" selected>150%</option>
+          <option value="200">200%</option>
+        </select>
+        <button class="fig-modal__close" type="button" data-fig-close>✕ 閉じる（ESC）</button>
+      </div>
+    </div>
+    <div class="fig-modal__body" id="figModalBody"></div>
+  </div>
+</div>
+
 <script>
 (function () {
   "use strict";
@@ -719,6 +738,75 @@ main().catch((err) =&gt; console.error(err));</code></pre>
         requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);
+    }
+  }
+
+  /* ---------- 図の拡大モーダル（100% / 150% / 200% ・ ESC で閉じる） ---------- */
+  var modal = document.getElementById("figModal");
+  var modalBody = document.getElementById("figModalBody");
+  var scaleSel = document.getElementById("figModalScale");
+  var lastFocus = null, curNode = null, curBaseW = 0;
+
+  function applyScale() {
+    if (!curNode) return;
+    var pct = parseInt(scaleSel.value, 10) || 150;
+    curNode.style.maxWidth = "none";
+    curNode.style.width = Math.round(curBaseW * pct / 100) + "px";
+    curNode.style.height = "auto";
+  }
+
+  function openFig(fig, trigger) {
+    // 描画済みの図（mermaid の SVG、またはカメラの img）を複製して拡大表示
+    var src = fig.querySelector(".mermaid svg") || fig.querySelector("img.fig-img");
+    if (!src) return;
+    lastFocus = trigger || null;
+    curBaseW = src.getBoundingClientRect().width || 720;
+    var clone = src.cloneNode(true);
+    modalBody.innerHTML = "";
+    modalBody.appendChild(clone);
+    curNode = clone;
+    scaleSel.value = "150";
+    applyScale();
+    showModal();
+  }
+
+  function showModal() {
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    var closeBtn = modal.querySelector(".fig-modal__close");
+    if (closeBtn) closeBtn.focus();
+  }
+  function closeModal() {
+    if (!modal.classList.contains("is-open")) return;
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    modalBody.innerHTML = "";
+    curNode = null;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  if (modal) {
+    scaleSel.addEventListener("change", applyScale);
+    modal.addEventListener("click", function (e) {
+      if (e.target.hasAttribute("data-fig-close")) closeModal();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeModal();
+    });
+    // すべての図に「拡大」ボタンを追加
+    var figures = document.querySelectorAll(".figure");
+    for (var fi = 0; fi < figures.length; fi++) {
+      (function (fig) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "fig-zoom";
+        btn.textContent = "⤢ 拡大";
+        btn.setAttribute("aria-label", "この図を拡大表示する");
+        btn.addEventListener("click", function () { openFig(fig, btn); });
+        fig.appendChild(btn);
+      })(figures[fi]);
     }
   }
 })();

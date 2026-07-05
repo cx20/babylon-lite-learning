@@ -334,6 +334,7 @@
 
   /* ---------- diagrams ---------- */
   .figure {
+    position: relative;
     margin: 24px 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
     background: var(--surface-2); padding: 22px 20px 16px;
   }
@@ -347,6 +348,58 @@
   }
   .figure figcaption b { color: var(--ink-soft); }
   .mmd-err { color: var(--warn); font-size: 0.9rem; text-align: center; margin: 12px 0; }
+
+  /* zoom button on each figure */
+  .fig-zoom {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    font: inherit; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 11px; border-radius: 8px; cursor: pointer;
+    color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border);
+    transition: border-color .12s, color .12s, background .12s, transform .12s;
+  }
+  .fig-zoom:hover { color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); transform: translateY(-1px); }
+
+  /* enlarge modal */
+  .fig-modal {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    align-items: center; justify-content: center; padding: 3vh 3vw;
+  }
+  .fig-modal.is-open { display: flex; }
+  .fig-modal__backdrop { position: absolute; inset: 0; background: color-mix(in srgb, #000 62%, transparent); }
+  .fig-modal__dialog {
+    position: relative; z-index: 1;
+    max-width: 96vw; max-height: 94vh; width: auto;
+    display: flex; flex-direction: column;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 14px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.6);
+    overflow: hidden;
+  }
+  .fig-modal__bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 14px 12px 18px; border-bottom: 1px solid var(--border); flex: none;
+  }
+  .fig-modal__title { font-size: 0.9rem; font-weight: 700; color: var(--ink-soft); }
+  .fig-modal__ctrl { display: flex; align-items: center; gap: 10px; }
+  .fig-modal__ctrl label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .fig-modal__ctrl select {
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; cursor: pointer;
+  }
+  .fig-modal__ctrl select:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .fig-modal__close {
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 7px 13px; border-radius: 9px; color: #fff;
+    background: var(--accent); border: 1px solid var(--accent);
+  }
+  .fig-modal__close:hover { filter: brightness(1.06); }
+  .fig-modal__body {
+    flex: 1; min-height: 0; overflow: auto; padding: 24px;
+    display: flex; align-items: flex-start; justify-content: safe center;
+    background: var(--surface-2);
+  }
+  .fig-modal__body svg, .fig-modal__body img { display: block; height: auto; }
 
   footer {
     border-top: 1px solid var(--border); margin-top: 20px;
