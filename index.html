@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="WebGPU専用の軽量3Dエンジン Babylon Lite の初学者向け入門ページ。考え方の解説と、Lite Playgroundで動くサンプルコード付き。">
+<title>Babylon Lite 入門 — WebGPU 3Dエンジンをはじめから</title>
+<style>
+  :root {
+    --bg: #EEF1F5;
+    --surface: #FFFFFF;
+    --surface-2: #F7F9FB;
+    --ink: #171A21;
+    --ink-soft: #3A4150;
+    --muted: #697485;
+    --border: #DCE1E9;
+    --accent: #E24A32;
+    --accent-ink: #C13A24;
+    --support: #2563EB;
+    --tip: #2E9E6B;
+    --warn: #C57A1E;
+    /* code chrome — dark "viewport" in both themes */
+    --code-bg: #0D1117;
+    --code-head: #161C25;
+    --code-border: #232B36;
+    --code-ink: #C9D2DE;
+    --code-com: #6B7688;
+    --code-str: #7FD1B9;
+    --code-kw: #FF8A6B;
+    --code-fn: #77A6FF;
+    --code-dot: #2E3947;
+
+    --font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+    --font-mono: "SFMono-Regular", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "Noto Sans Mono", monospace;
+
+    --maxw: 940px;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0C0F14;
+      --surface: #141922;
+      --surface-2: #1A2029;
+      --ink: #E7EBF1;
+      --ink-soft: #B7BFCC;
+      --muted: #7E8899;
+      --border: #242C38;
+      --accent: #FF6A4D;
+      --accent-ink: #FF8064;
+      --support: #6AA0FF;
+      --tip: #3FBE86;
+      --warn: #E7A24E;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #EEF1F5; --surface: #FFFFFF; --surface-2: #F7F9FB;
+    --ink: #171A21; --ink-soft: #3A4150; --muted: #697485; --border: #DCE1E9;
+    --accent: #E24A32; --accent-ink: #C13A24; --support: #2563EB;
+    --tip: #2E9E6B; --warn: #C57A1E;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0C0F14; --surface: #141922; --surface-2: #1A2029;
+    --ink: #E7EBF1; --ink-soft: #B7BFCC; --muted: #7E8899; --border: #242C38;
+    --accent: #FF6A4D; --accent-ink: #FF8064; --support: #6AA0FF;
+    --tip: #3FBE86; --warn: #E7A24E;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 12px clamp(16px, 4vw, 40px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand .glyph {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: conic-gradient(from 210deg, var(--accent), #ff9a5a, var(--support), var(--accent));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent) inset;
+  }
+  .brand small { color: var(--muted); font-weight: 500; letter-spacing: 0; }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
+  .btn {
+    font: inherit; font-weight: 600; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+    cursor: pointer; text-decoration: none; transition: transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn-primary, .btn-primary { color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.04); border-color: var(--accent); }
+  .icon-btn {
+    width: 38px; height: 38px; padding: 0; justify-content: center;
+    font-size: 16px;
+  }
+
+  /* ---------- layout ---------- */
+  main { max-width: var(--maxw); margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+  section { scroll-margin-top: 76px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 12px;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); border-radius: 2px; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
+  h3 { font-size: 1.18rem; letter-spacing: -0.01em; margin: 0 0 8px; }
+  p { margin: 0 0 16px; max-width: 68ch; color: var(--ink-soft); }
+  p.lead { font-size: 1.08rem; color: var(--ink); }
+  a { color: var(--accent-ink); text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent); }
+  code.inl {
+    font-family: var(--font-mono); font-size: 0.86em;
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 6px; color: var(--ink);
+    white-space: nowrap;
+  }
+  .divider { height: 1px; background: var(--border); border: 0; margin: 64px 0; }
+  .section-head { margin-bottom: 28px; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(120% 90% at 82% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      radial-gradient(100% 80% at 8% 120%, color-mix(in srgb, var(--support) 12%, transparent), transparent 55%);
+  }
+  .hero-inner {
+    max-width: var(--maxw); margin: 0 auto;
+    padding: clamp(48px, 8vw, 92px) clamp(16px, 4vw, 40px) clamp(44px, 7vw, 76px);
+    display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 36px; align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.1rem, 6.2vw, 3.5rem); line-height: 1.06; letter-spacing: -0.035em;
+    margin: 14px 0 18px; text-wrap: balance;
+  }
+  .hero h1 .lite { color: var(--accent); }
+  .hero p { font-size: 1.12rem; max-width: 40ch; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 26px; }
+  .badge {
+    font-size: 12.5px; font-weight: 600; letter-spacing: .01em;
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft);
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .badge b { color: var(--ink); font-weight: 700; }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .badge .dot.b { background: var(--support); }
+  .badge .dot.g { background: var(--tip); }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .hero-visual {
+    position: relative; aspect-ratio: 1 / 1; width: 100%;
+    border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--border);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--ink) 4%, var(--surface)), var(--surface));
+    box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--ink) 40%, transparent);
+  }
+  .hero-visual canvas { display: block; width: 100%; height: 100%; }
+  .hero-visual .vlabel {
+    position: absolute; left: 12px; bottom: 11px;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .hero-visual .vlabel .live { width: 7px; height: 7px; border-radius: 50%; background: var(--tip); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tip) 22%, transparent); }
+
+  /* ---------- toc ---------- */
+  .toc {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 40px 0 8px;
+  }
+  .toc a {
+    font-size: 13.5px; font-weight: 600; text-decoration: none;
+    color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border);
+    padding: 7px 13px; border-radius: 999px; transition: border-color .12s, color .12s;
+  }
+  .toc a:hover { color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .toc a .n { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+
+  /* ---------- cards ---------- */
+  .grid { display: grid; gap: 16px; }
+  .grid.g2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.g4 { grid-template-columns: repeat(2, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+  }
+  .card .kicker {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+    color: var(--accent-ink); letter-spacing: .02em; margin-bottom: 10px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .card .kicker .num {
+    display: inline-grid; place-items: center; width: 24px; height: 24px;
+    border-radius: 7px; background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent-ink); font-weight: 700;
+  }
+  .card h3 { margin-bottom: 6px; }
+  .card p { margin: 0; font-size: 0.96rem; }
+
+  /* comparison */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .compare > div { padding: 22px; }
+  .compare .c-bjs { background: var(--surface-2); border-right: 1px solid var(--border); }
+  .compare .c-lite { background: var(--surface); }
+  .compare h4 { margin: 0 0 14px; font-size: 0.95rem; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+  .compare .tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .compare .tag.a { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-ink); }
+  .compare .tag.n { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+  .compare ul { margin: 0; padding-left: 18px; }
+  .compare li { margin-bottom: 9px; color: var(--ink-soft); font-size: 0.95rem; }
+  .compare li b { color: var(--ink); }
+
+  /* ---------- lifecycle ---------- */
+  .lifecycle { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin: 6px 0 4px; }
+  .lc-step {
+    flex: 1 1 160px; min-width: 150px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 16px 18px; position: relative;
+  }
+  .lc-step .lc-n { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .lc-step .lc-fn { font-family: var(--font-mono); font-size: 0.92rem; font-weight: 700; color: var(--accent-ink); margin: 4px 0 6px; word-break: break-all; }
+  .lc-step .lc-d { font-size: 0.86rem; color: var(--ink-soft); }
+  .lc-arrow { align-self: center; color: var(--muted); font-size: 20px; }
+  @media (max-width: 720px) { .lc-arrow { transform: rotate(90deg); } }
+
+  /* ---------- code ---------- */
+  .sample { margin: 26px 0 8px; }
+  .sample-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .sample-head .st-num {
+    font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+    color: #fff; background: var(--accent); padding: 3px 9px; border-radius: 7px;
+  }
+  .sample-head h3 { margin: 0; }
+  .sample-note { font-size: 0.95rem; }
+  .code {
+    border-radius: 12px; overflow: hidden; border: 1px solid var(--code-border);
+    background: var(--code-bg);
+    box-shadow: 0 18px 40px -26px color-mix(in srgb, #000 60%, transparent);
+  }
+  .code-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--code-head);
+    border-bottom: 1px solid var(--code-border);
+  }
+  .code-head .dots { display: flex; gap: 6px; }
+  .code-head .dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--code-dot); display: block; }
+  .code-head .file {
+    font-family: var(--font-mono); font-size: 12px; color: #8894a4; letter-spacing: .02em;
+    margin-left: 4px;
+  }
+  .code-head .spacer { flex: 1; }
+  .code-head .lang { font-family: var(--font-mono); font-size: 11px; color: #6b7688; text-transform: uppercase; letter-spacing: .08em; }
+  .copy {
+    font: inherit; font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
+    color: #aeb8c6; background: transparent; border: 1px solid #2b3542; border-radius: 7px;
+    padding: 5px 10px; cursor: pointer; transition: all .12s ease;
+  }
+  .copy:hover { color: #fff; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 24%, transparent); }
+  .copy.done { color: var(--tip); border-color: var(--tip); }
+  pre { margin: 0; overflow-x: auto; }
+  pre code {
+    display: block; font-family: var(--font-mono); font-size: 13.2px; line-height: 1.7;
+    color: var(--code-ink); padding: 18px 18px 20px; tab-size: 4;
+    white-space: pre;
+  }
+  .tk-com { color: var(--code-com); font-style: italic; }
+  .tk-str { color: var(--code-str); }
+  .tk-kw { color: var(--code-kw); }
+  .tk-fn { color: var(--code-fn); }
+
+  /* ---------- callouts ---------- */
+  .callout {
+    display: flex; gap: 14px; padding: 18px 20px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--surface);
+    border-left: 3px solid var(--accent); margin: 20px 0;
+  }
+  .callout .ci { font-size: 20px; line-height: 1.4; }
+  .callout.tip { border-left-color: var(--tip); }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout h4 { margin: 0 0 4px; font-size: 0.98rem; }
+  .callout p { margin: 0; font-size: 0.94rem; }
+  .callout p + p { margin-top: 8px; }
+
+  /* ---------- table ---------- */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.92rem; }
+  thead th {
+    text-align: left; font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; padding: 12px 16px; background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .m { font-family: var(--font-mono); font-size: 0.86rem; }
+  td.bjs .m { color: var(--muted); }
+  td.lite .m { color: var(--accent-ink); font-weight: 600; }
+
+  /* gotchas */
+  .gotchas { display: grid; gap: 12px; }
+  .gotcha { display: flex; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .gotcha .gi { font-family: var(--font-mono); font-weight: 700; color: var(--accent-ink); flex: none; }
+  .gotcha div > b { display: block; margin-bottom: 3px; }
+  .gotcha p { margin: 0; font-size: 0.93rem; }
+
+  /* next steps / links */
+  .links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .link-card {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 18px 20px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface); text-decoration: none; color: var(--ink);
+    transition: border-color .12s, transform .12s;
+  }
+  .link-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); transform: translateY(-2px); }
+  .link-card .lc-t { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .link-card .lc-t .ar { color: var(--accent); transition: transform .12s; }
+  .link-card:hover .lc-t .ar { transform: translateX(3px); }
+  .link-card .lc-s { font-size: 0.88rem; color: var(--muted); }
+
+  footer {
+    border-top: 1px solid var(--border); margin-top: 20px;
+    padding: 30px clamp(16px,4vw,40px) 48px; color: var(--muted); font-size: 0.86rem;
+  }
+  footer .fw { max-width: var(--maxw); margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
+  footer a { color: var(--ink-soft); }
+
+  @media (max-width: 780px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-visual { max-width: 320px; }
+    .grid.g2, .grid.g4, .compare, .links { grid-template-columns: 1fr; }
+    .compare .c-bjs { border-right: 0; border-bottom: 1px solid var(--border); }
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="glyph" aria-hidden="true"></span> Babylon&nbsp;Lite <small>入門ガイド</small></div>
+  <div class="topbar-actions">
+    <button class="btn icon-btn" id="themeToggle" aria-label="テーマを切り替え" title="テーマを切り替え">◐</button>
+    <a class="btn btn-primary" href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">Playground を開く ↗</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow">WebGPU 専用 · 軽量 3D エンジン</span>
+      <h1>3Dを、<br><span class="lite">はじめから</span>学ぶ。</h1>
+      <p class="lead">Babylon Lite は、Babylon.js とほぼ同じ描画結果を<strong>ずっと小さなコード</strong>で実現する、WebGPU 専用の 3D エンジンです。このページで、考え方とはじめの一歩をやさしく解説します。</p>
+      <div class="badge-row">
+        <span class="badge"><span class="dot"></span>WebGPU <b>専用</b></span>
+        <span class="badge"><span class="dot b"></span>約 <b>19×</b> 小さいバンドル</span>
+        <span class="badge"><span class="dot g"></span>関数型・<b>データ指向</b></span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#samples">サンプルコードを見る</a>
+        <a class="btn" href="#what">Babylon Lite とは？</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <canvas id="wire" width="520" height="520"></canvas>
+      <div class="vlabel"><span class="live" aria-hidden="true"></span> wireframe sphere · segments 16</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <nav class="toc" aria-label="目次">
+    <a href="#what"><span class="n">01</span>Babylon Lite とは</a>
+    <a href="#requirements"><span class="n">02</span>動作要件</a>
+    <a href="#mental"><span class="n">03</span>4つの考え方</a>
+    <a href="#lifecycle"><span class="n">04</span>ライフサイクル</a>
+    <a href="#playground"><span class="n">05</span>Playground の使い方</a>
+    <a href="#samples"><span class="n">06</span>サンプルコード集</a>
+    <a href="#mapping"><span class="n">07</span>API 早見表</a>
+    <a href="#gotchas"><span class="n">08</span>つまづきポイント</a>
+    <a href="#next"><span class="n">09</span>次のステップ</a>
+  </nav>
+
+  <hr class="divider" style="margin-top:36px">
+
+  <!-- 01 -->
+  <section id="what">
+    <div class="section-head">
+      <span class="eyebrow">01 — 概要</span>
+      <h2>Babylon Lite とは</h2>
+    </div>
+    <p class="lead">Babylon Lite は、<a href="https://github.com/BabylonJS/Babylon-Lite" target="_blank" rel="noopener">BabylonJS チーム</a>が「白紙から」作り直した 3D レンダリングエンジンです。レガシーを持たず、最新の GPU API（WebGPU）の上に直接構築されています。</p>
+    <p>ねらいはただ一つ ——「<strong>Babylon.js とピクセル単位で同じ絵を、ごく一部のコードサイズで描く</strong>」こと。ツリーシェイク（使わない機能をバンドルから自動で取り除く仕組み）を徹底し、平均で約 19 倍小さいバンドル、3〜4 倍速いフレーム時間を実現しています。</p>
+
+    <div class="compare" style="margin-top:24px">
+      <div class="c-bjs">
+        <h4>Babylon.js <span class="tag n">クラスベース</span></h4>
+        <ul>
+          <li><b>クラスと <code class="inl">new</code></b> でオブジェクトを生成</li>
+          <li>WebGL / WebGL2 / WebGPU すべてに対応</li>
+          <li>豊富な機能。フル機能なぶんバンドルは大きめ</li>
+          <li>作った時点でシーンに自動登録される</li>
+        </ul>
+      </div>
+      <div class="c-lite">
+        <h4>Babylon Lite <span class="tag a">関数型・データ指向</span></h4>
+        <ul>
+          <li><b>ファクトリ関数</b>でプレーンなデータを生成</li>
+          <li><b>WebGPU 専用</b>（WebGL フォールバックなし）</li>
+          <li>使った機能だけをバンドル。極小サイズ</li>
+          <li><code class="inl">addToScene()</code> で明示的にシーンへ登録</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout tip" style="margin-top:24px">
+      <span class="ci" aria-hidden="true">💡</span>
+      <div>
+        <h4>Babylon.js を知らなくても大丈夫</h4>
+        <p>このガイドは Babylon.js の経験を前提としません。ただし後半の「API 早見表」は、Babylon.js 経験者が Lite に移るときの対応表として使えます。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 02 -->
+  <section id="requirements">
+    <div class="section-head">
+      <span class="eyebrow">02 — 準備</span>
+      <h2>動作要件</h2>
+    </div>
+    <p>Babylon Lite は <strong>WebGPU 専用</strong>です。WebGL への切り替え（フォールバック）はありません。まずはお使いのブラウザが WebGPU に対応しているか確認しましょう。</p>
+    <div class="grid g2" style="margin-top:8px">
+      <div class="card">
+        <div class="kicker">対応ブラウザ</div>
+        <h3>Chrome / Edge 113+</h3>
+        <p>最も安定して動きます。加えて、新しめの Firefox・Safari でも動作します。学習用にはデスクトップ版 Chrome か Edge がおすすめです。</p>
+      </div>
+      <div class="card">
+        <div class="kicker">インストール不要で試す</div>
+        <h3>Lite Playground</h3>
+        <p>ブラウザだけで書いて・動かして・共有できる公式エディタ。Node も npm も不要です。このページのサンプルはすべてここで動きます。</p>
+      </div>
+    </div>
+    <div class="callout warn" style="margin-top:16px">
+      <span class="ci" aria-hidden="true">⚠️</span>
+      <div>
+        <h4><code class="inl">createEngine()</code> がエラーになるとき</h4>
+        <p>WebGPU が使えない環境では <code class="inl">createEngine()</code> が例外を投げます。ブラウザとバージョンを確認してください。プロジェクトに組み込む場合は <code class="inl">npm install @babylonjs/lite</code> と、Vite などの ESM バンドラが必要です。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 03 -->
+  <section id="mental">
+    <div class="section-head">
+      <span class="eyebrow">03 — メンタルモデル</span>
+      <h2>まず押さえたい 4つの考え方</h2>
+    </div>
+    <p>Babylon Lite は見た目こそ Babylon.js に似ていますが、いくつかの明確なルールの上に成り立っています。この 4つを頭に入れると、API 全体の挙動が予測できるようになります。</p>
+    <div class="grid g4" style="margin-top:8px">
+      <div class="card">
+        <div class="kicker"><span class="num">1</span>PLAIN DATA</div>
+        <h3>クラスではなく「データ」</h3>
+        <p>カメラ・ライト・メッシュは、メソッドを持たないただのデータです。ファクトリ関数で作り、振る舞いは <code class="inl">addToScene(scene, light)</code> のような単独の関数が受け持ちます。だから未使用の関数はバンドルから丸ごと消せます。</p>
+      </div>
+      <div class="card">
+        <div class="kicker"><span class="num">2</span>SCENE OWNS</div>
+        <h3>シーンだけが所有者</h3>
+        <p>ライトもメッシュもシーンを知りません。<strong>内容を知っているのはシーンだけ</strong>。部品を単独で作り、シーンに手渡します。シーンに入っていないものは描画されません。</p>
+      </div>
+      <div class="card">
+        <div class="kicker"><span class="num">3</span>LIFECYCLE</div>
+        <h3>明示的なライフサイクル</h3>
+        <p>すべてのアプリが同じ 4段階をこの順で通ります —— <b>作成 → 追加 → 登録 → 開始</b>。表示されないときの原因は、たいてい「登録の後で追加した」か「追加し忘れ」です。</p>
+      </div>
+      <div class="card">
+        <div class="kicker"><span class="num">4</span>PAY PER USE</div>
+        <h3>使った分だけ</h3>
+        <p>glTF 拡張・HDR・影といった機能はすべて独立モジュール。シーンが実際に必要とした瞬間だけ読み込まれます。管理は不要 —— 書きたいシーンを書けば、あとはバンドラが最適化します。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 04 -->
+  <section id="lifecycle">
+    <div class="section-head">
+      <span class="eyebrow">04 — ライフサイクル</span>
+      <h2>作成 → 追加 → 登録 → 開始</h2>
+    </div>
+    <p>Babylon Lite のすべてのアプリはこの流れに従います。特に <strong>3 の「登録」はすべてを追加した後で一度だけ</strong>呼ぶのがポイントです。</p>
+    <div class="lifecycle">
+      <div class="lc-step">
+        <div class="lc-n">STEP 1 · 作成</div>
+        <div class="lc-fn">createEngine()</div>
+        <div class="lc-d">GPU デバイスを取得してエンジンを起動します。</div>
+      </div>
+      <div class="lc-arrow" aria-hidden="true">→</div>
+      <div class="lc-step">
+        <div class="lc-n">STEP 2 · 追加</div>
+        <div class="lc-fn">addToScene()</div>
+        <div class="lc-d">カメラ・ライト・メッシュ・読込済みモデルをシーンに追加。</div>
+      </div>
+      <div class="lc-arrow" aria-hidden="true">→</div>
+      <div class="lc-step">
+        <div class="lc-n">STEP 3 · 登録</div>
+        <div class="lc-fn">registerScene()</div>
+        <div class="lc-d">GPU 側の準備（パイプライン構築など）をまとめて実行。</div>
+      </div>
+      <div class="lc-arrow" aria-hidden="true">→</div>
+      <div class="lc-step">
+        <div class="lc-n">STEP 4 · 開始</div>
+        <div class="lc-fn">startEngine()</div>
+        <div class="lc-d">描画ループを開始。最初の 1フレーム後に解決します。</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 05 -->
+  <section id="playground">
+    <div class="section-head">
+      <span class="eyebrow">05 — 環境</span>
+      <h2>Playground の使い方</h2>
+    </div>
+    <p><a href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">Lite Playground</a> を開くと、左に TypeScript エディタ、右に WebGPU キャンバスが表示されます。コードを書いて <strong>Run（▶ ボタン、または Ctrl / Cmd + Enter）</strong>を押すと、その場で実行されます。</p>
+    <p>コードは実際のアプリと同じく、<code class="inl">@babylonjs/lite</code> から必要な関数を <code class="inl">import</code> し、<code class="inl">renderCanvas</code> という id のキャンバスを取得します。基本の骨組みは次のとおりです。</p>
+
+    <div class="code" style="margin-top:8px">
+      <div class="code-head">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="file">main.ts — 基本テンプレート</span>
+        <span class="spacer"></span>
+        <span class="lang">typescript</span>
+        <button class="copy" type="button">コピー</button>
+      </div>
+      <pre><code>import { createEngine, createSceneContext /* …必要な関数… */ } from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    // …ここでシーンを組み立てる…
+
+    await registerScene(scene); // すべて追加した後で
+    await startEngine(engine);  // 描画ループ開始
+}
+
+main().catch((err) =&gt; console.error(err));</code></pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="ci" aria-hidden="true">🛝</span>
+      <div>
+        <h4>使い方のコツ</h4>
+        <p><b>Examples</b> ドロップダウンから完成済みのシーンを読み込み、少しずつ書き換えて Run —— これが API を覚える一番の近道です。<b>Save</b>（フロッピーアイコン）でパーマリンクが作られ、そのまま共有できます。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 06 -->
+  <section id="samples">
+    <div class="section-head">
+      <span class="eyebrow">06 — ハンズオン</span>
+      <h2>サンプルコード集</h2>
+    </div>
+    <p>ここからは <strong>Lite Playground にそのまま貼り付けて動く</strong> 4つのサンプルです。上から順に、少しずつ要素を足していきます。各コードは右上の「コピー」でコピーできます。</p>
+
+    <!-- sample 1 -->
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">01</span><h3>最初のシーン —— 赤い球を描く</h3></div>
+      <p class="sample-note">エンジン・カメラ・ライト・球という最小構成です。マウスでドラッグすると、カメラが球のまわりを回ります（<code class="inl">attachControl</code> の効果）。</p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="file">01-hello-sphere.ts</span>
+          <span class="spacer"></span><span class="lang">typescript</span>
+          <button class="copy" type="button">コピー</button>
+        </div>
+        <pre><code>import {
+    createEngine, createSceneContext, createArcRotateCamera, attachControl,
+    createHemisphericLight, createSphere, createPbrMaterial,
+    addToScene, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+
+    // 1. エンジン（GPU デバイスを取得）
+    const engine = await createEngine(canvas);
+
+    // 2. シーン
+    const scene = createSceneContext(engine);
+
+    // カメラ：ターゲットの周りを回る ArcRotateCamera
+    // 引数は (alpha 回転, beta 仰角, radius 距離, target 注視点)
+    const camera = createArcRotateCamera(-Math.PI / 2, Math.PI / 2.5, 4, { x: 0, y: 0, z: 0 });
+    scene.camera = camera;
+    attachControl(camera, canvas, scene); // マウス操作を有効化
+
+    // ライト（真上からの半球ライト、強さ 1.0）
+    addToScene(scene, createHemisphericLight([0, 1, 0], 1.0));
+
+    // 球 ＋ PBR マテリアル（赤・少しつや消し）
+    const sphere = createSphere(engine, { segments: 16, diameter: 2 });
+    sphere.material = createPbrMaterial({ baseColorFactor: [0.9, 0.1, 0.1, 1], metallicFactor: 0.1, roughnessFactor: 0.4 });
+    addToScene(scene, sphere);
+
+    // 3. 登録（すべて追加した後で）
+    await registerScene(scene);
+
+    // 4. 描画ループ開始
+    await startEngine(engine);
+}
+
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+
+    <!-- sample 2 -->
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">02</span><h3>アニメーション —— 箱を回す</h3></div>
+      <p class="sample-note">毎フレーム呼ばれる <code class="inl">onBeforeRender</code> を使って回転させます。コールバックの引数 <code class="inl">deltaMs</code> は前フレームからの経過ミリ秒。これを使うと、フレームレートに依存しない滑らかな動きになります。</p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="file">02-spinning-box.ts</span>
+          <span class="spacer"></span><span class="lang">typescript</span>
+          <button class="copy" type="button">コピー</button>
+        </div>
+        <pre><code>import {
+    createEngine, createSceneContext, createArcRotateCamera, attachControl,
+    createHemisphericLight, createDirectionalLight, createBox, createStandardMaterial,
+    addToScene, onBeforeRender, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    const camera = createArcRotateCamera(-Math.PI / 2, Math.PI / 2.5, 6, { x: 0, y: 0, z: 0 });
+    scene.camera = camera;
+    attachControl(camera, canvas, scene);
+
+    // やわらかい環境光＋方向性ライトで立体感を出す
+    addToScene(scene, createHemisphericLight([0, 1, 0], 0.7));
+    addToScene(scene, createDirectionalLight([-1, -2, -1], 1.0));
+
+    // 箱＋標準マテリアル（青）
+    const box = createBox(engine);
+    const mat = createStandardMaterial();
+    mat.diffuseColor = [0.2, 0.6, 1.0]; // [R, G, B]（0〜1）
+    box.material = mat;
+    addToScene(scene, box);
+
+    // 毎フレーム、経過時間ぶんだけ回転させる
+    let angle = 0;
+    onBeforeRender(scene, (deltaMs) =&gt; {
+        angle += deltaMs * 0.001;
+        box.rotation.set(angle * 0.5, angle, 0); // (x, y, z) ラジアン
+    });
+
+    await registerScene(scene);
+    await startEngine(engine);
+}
+
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+
+    <!-- sample 3 -->
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">03</span><h3>複数のオブジェクトと地面</h3></div>
+      <p class="sample-note"><code class="inl">position.set(x, y, z)</code> で配置を変えられます。地面（<code class="inl">createGround</code>）の上に、球と箱を左右に並べます。それぞれ別のマテリアルで色分けしています。</p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="file">03-scene-layout.ts</span>
+          <span class="spacer"></span><span class="lang">typescript</span>
+          <button class="copy" type="button">コピー</button>
+        </div>
+        <pre><code>import {
+    createEngine, createSceneContext, createArcRotateCamera, attachControl,
+    createHemisphericLight, createDirectionalLight,
+    createSphere, createBox, createGround, createStandardMaterial,
+    addToScene, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    const camera = createArcRotateCamera(-Math.PI / 2.2, Math.PI / 3, 10, { x: 0, y: 0.5, z: 0 });
+    scene.camera = camera;
+    attachControl(camera, canvas, scene);
+
+    addToScene(scene, createHemisphericLight([0, 1, 0], 0.6));
+    addToScene(scene, createDirectionalLight([-1, -2, -1], 1.2));
+
+    // 地面（12 × 12）
+    const ground = createGround(engine, { width: 12, height: 12 });
+    const groundMat = createStandardMaterial();
+    groundMat.diffuseColor = [0.30, 0.34, 0.32];
+    ground.material = groundMat;
+    addToScene(scene, ground);
+
+    // 球（左に配置・赤）
+    const sphere = createSphere(engine, { diameter: 2 });
+    sphere.position.set(-2, 1, 0);
+    const red = createStandardMaterial();
+    red.diffuseColor = [0.9, 0.25, 0.2];
+    sphere.material = red;
+    addToScene(scene, sphere);
+
+    // 箱（右に配置・青）
+    const box = createBox(engine);
+    box.position.set(2, 0.5, 0);
+    const blue = createStandardMaterial();
+    blue.diffuseColor = [0.2, 0.45, 0.9];
+    box.material = blue;
+    addToScene(scene, box);
+
+    await registerScene(scene);
+    await startEngine(engine);
+}
+
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+
+    <!-- sample 4 -->
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">04</span><h3>3Dモデルと環境光（IBL）を読み込む</h3></div>
+      <p class="sample-note">実務でよくある構成です。<code class="inl">loadGltf</code> で glTF/GLB モデルを、<code class="inl">loadEnvironment</code> で画像ベースの環境光（IBL）とスカイボックスを読み込みます。<code class="inl">createDefaultCamera</code> がモデルに合わせてカメラを自動調整してくれます。</p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="file">04-load-model.ts</span>
+          <span class="spacer"></span><span class="lang">typescript</span>
+          <button class="copy" type="button">コピー</button>
+        </div>
+        <pre><code>import {
+    createEngine, createSceneContext, createDefaultCamera, attachControl,
+    createHemisphericLight, loadGltf, loadEnvironment,
+    addToScene, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    addToScene(scene, createHemisphericLight([0, 1, 0], 1.0));
+
+    // glTF モデルを読み込む（addToScene が階層・メッシュ・アニメーションを登録）
+    addToScene(scene, await loadGltf(engine, "https://playground.babylonjs.com/scenes/BoomBox.glb"));
+
+    // 画像ベースの環境光（IBL）＋ スカイボックス＋ 地面
+    await loadEnvironment(scene, "https://assets.babylonjs.com/core/environments/environmentSpecular.env", {
+        skyboxUrl: "https://assets.babylonjs.com/core/environments/backgroundSkybox.dds",
+        skyboxSize: 1000,
+    });
+
+    // 読み込んだモデルに合わせてカメラを自動フレーミング
+    const camera = createDefaultCamera(scene);
+    attachControl(camera, canvas, scene);
+
+    await registerScene(scene);
+    await startEngine(engine);
+}
+
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+      <div class="callout">
+        <span class="ci" aria-hidden="true">🔗</span>
+        <div>
+          <h4>アセットは絶対 URL で</h4>
+          <p>モデルや環境テクスチャは <code class="inl">https://…</code> の絶対 URL で参照すると、Playground でもダウンロード後でも同じように解決されます。上の例は Babylon 公式が配布しているサンプルアセットです。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 07 -->
+  <section id="mapping">
+    <div class="section-head">
+      <span class="eyebrow">07 — リファレンス</span>
+      <h2>Babylon.js → Lite 早見表</h2>
+    </div>
+    <p>Babylon.js 経験者向けの対応表です。共通する考え方は「<strong><code class="inl">new クラス(...)</code> がファクトリ関数に、<code class="inl">Vector3 / Color3</code> がただの配列に</strong>」なる、というものです。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>やりたいこと</th><th>Babylon.js</th><th>Babylon Lite</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>エンジン生成</td><td class="bjs"><span class="m">new WebGPUEngine(canvas)</span></td><td class="lite"><span class="m">await createEngine(canvas)</span></td></tr>
+          <tr><td>シーン生成</td><td class="bjs"><span class="m">new Scene(engine)</span></td><td class="lite"><span class="m">createSceneContext(engine)</span></td></tr>
+          <tr><td>描画ループ</td><td class="bjs"><span class="m">engine.runRenderLoop(...)</span></td><td class="lite"><span class="m">await startEngine(engine)</span></td></tr>
+          <tr><td>周回カメラ</td><td class="bjs"><span class="m">new ArcRotateCamera(...)</span></td><td class="lite"><span class="m">createArcRotateCamera(α, β, r, target)</span></td></tr>
+          <tr><td>カメラ操作</td><td class="bjs"><span class="m">camera.attachControl(canvas)</span></td><td class="lite"><span class="m">attachControl(camera, canvas, scene)</span></td></tr>
+          <tr><td>半球ライト</td><td class="bjs"><span class="m">new HemisphericLight(...)</span></td><td class="lite"><span class="m">createHemisphericLight([0,1,0], 1.0)</span></td></tr>
+          <tr><td>方向性ライト</td><td class="bjs"><span class="m">new DirectionalLight(...)</span></td><td class="lite"><span class="m">createDirectionalLight([0,-1,0])</span></td></tr>
+          <tr><td>球 / 箱 / 地面</td><td class="bjs"><span class="m">MeshBuilder.CreateSphere(...)</span></td><td class="lite"><span class="m">createSphere(engine) / createBox(engine)</span></td></tr>
+          <tr><td>標準マテリアル</td><td class="bjs"><span class="m">new StandardMaterial(...)</span></td><td class="lite"><span class="m">createStandardMaterial()</span></td></tr>
+          <tr><td>PBR マテリアル</td><td class="bjs"><span class="m">new PBRMaterial(...)</span></td><td class="lite"><span class="m">createPbrMaterial()</span></td></tr>
+          <tr><td>モデル読み込み</td><td class="bjs"><span class="m">SceneLoader.ImportMeshAsync(...)</span></td><td class="lite"><span class="m">addToScene(scene, await loadGltf(engine, url))</span></td></tr>
+          <tr><td>ベクトル / 色</td><td class="bjs"><span class="m">new Vector3(x,y,z) / new Color3(r,g,b)</span></td><td class="lite"><span class="m">{x,y,z} または [x,y,z] / [r,g,b]</span></td></tr>
+          <tr><td>毎フレーム処理</td><td class="bjs"><span class="m">scene.onBeforeRenderObservable.add(fn)</span></td><td class="lite"><span class="m">onBeforeRender(scene, fn)</span></td></tr>
+          <tr><td>削除 / 破棄</td><td class="bjs"><span class="m">mesh.dispose()</span></td><td class="lite"><span class="m">removeFromScene(scene, mesh)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout tip" style="margin-top:16px">
+      <span class="ci" aria-hidden="true">🧭</span>
+      <div>
+        <h4>いきなり全部書き換えなくてもいい</h4>
+        <p>既存の Babylon.js シーンを一気に移植するのが大変なら、<code class="inl">@babylonjs/lite-compat</code> という互換レイヤーがあります。<code class="inl">new WebGPUEngine</code> などの見慣れたクラス API のまま Lite の WebGPU レンダラで動かし、あとから少しずつネイティブ API へ移せます。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 08 -->
+  <section id="gotchas">
+    <div class="section-head">
+      <span class="eyebrow">08 — 注意点</span>
+      <h2>初学者がつまづきやすいところ</h2>
+    </div>
+    <div class="gotchas">
+      <div class="gotcha"><span class="gi">01</span><div><b>自動では追加されない</b><p>メッシュ・ライト・<code class="inl">loadGltf()</code> の結果は、必ず <code class="inl">addToScene()</code> で追加します。作っただけでは表示されません（<code class="inl">loadEnvironment()</code> は内部で自動追加されます）。</p></div></div>
+      <div class="gotcha"><span class="gi">02</span><div><b>登録は「全部追加した後」に一度だけ</b><p>表示されない原因の大半は、<code class="inl">registerScene()</code> の<strong>後</strong>に何かを追加していることです。追加 → 登録 → 開始 の順を守りましょう。</p></div></div>
+      <div class="gotcha"><span class="gi">03</span><div><b><code class="inl">new</code> は使わない</b><p>すべてファクトリ関数で生成します。<code class="inl">new ArcRotateCamera(...)</code> ではなく <code class="inl">createArcRotateCamera(...)</code> です。</p></div></div>
+      <div class="gotcha"><span class="gi">04</span><div><b>カメラは明示的に割り当てる</b><p><code class="inl">scene.camera = camera</code> とするか、<code class="inl">createDefaultCamera(scene)</code>（自動割り当て）を使います。カメラがないと何も映りません。</p></div></div>
+      <div class="gotcha"><span class="gi">05</span><div><b>ベクトルや色は「ただの配列」</b><p><code class="inl">Vector3</code> や <code class="inl">Color3</code> クラスはありません。位置は <code class="inl">[x, y, z]</code> か <code class="inl">{x, y, z}</code>、色は <code class="inl">[r, g, b]</code>（各 0〜1）で表します。</p></div></div>
+      <div class="gotcha"><span class="gi">06</span><div><b>破棄は <code class="inl">dispose()</code> ではない</b><p>1つのメッシュを消すなら <code class="inl">removeFromScene(scene, mesh)</code>。全体を片付けるなら <code class="inl">disposeScene(scene)</code> と <code class="inl">disposeEngine(engine)</code> を使います。</p></div></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 09 -->
+  <section id="next">
+    <div class="section-head">
+      <span class="eyebrow">09 — 次の一歩</span>
+      <h2>もっと学ぶ</h2>
+    </div>
+    <div class="links">
+      <a class="link-card" href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">
+        <span class="lc-t">Lite Playground <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">今日のサンプルを貼り付けて、動かして、書き換える。学習に最適。</span>
+      </a>
+      <a class="link-card" href="https://github.com/BabylonJS/Babylon-Lite" target="_blank" rel="noopener">
+        <span class="lc-t">GitHub: Babylon-Lite <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">本体のソース、公式ドキュメント（docs/lite）、シーンギャラリー。</span>
+      </a>
+      <a class="link-card" href="https://cx20.github.io/babylon-lite-demo-guide/" target="_blank" rel="noopener">
+        <span class="lc-t">日本語デモ解説ガイド <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">Minecraft 風・マリオ風・DOOM など、公式デモをコードの内側から解説。</span>
+      </a>
+      <a class="link-card" href="https://www.babylonjs.com/lite/" target="_blank" rel="noopener">
+        <span class="lc-t">Babylon Lite 公式ページ <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">「どのエンジンを使うべきか」の判断材料と、全体像の紹介。</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="fw">
+    <span>Babylon Lite 入門ガイド · 初学者向け学習ページ</span>
+    <span>出典: <a href="https://github.com/BabylonJS/Babylon-Lite" target="_blank" rel="noopener">Babylon-Lite 公式 docs</a> / <a href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">Lite Playground</a> / <a href="https://github.com/cx20/babylon-lite-demo-guide" target="_blank" rel="noopener">cx20 デモ解説</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- theme toggle ---------- */
+  var root = document.documentElement;
+  var toggle = document.getElementById("themeToggle");
+  toggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    if (!current) {
+      // no explicit theme yet — infer from the OS preference
+      current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+  });
+
+  /* ---------- syntax highlight ---------- */
+  var KW = /\b(import|from|const|let|var|await|async|function|return|new|as|of|in)\b/g;
+  var FN = /\b(createEngine|createSceneContext|createArcRotateCamera|createDefaultCamera|createFreeCamera|attachControl|createHemisphericLight|createDirectionalLight|createPointLight|createSpotLight|createSphere|createBox|createGround|createCylinder|createPlane|createStandardMaterial|createPbrMaterial|createGridMaterial|createTransformNode|addToScene|removeFromScene|registerScene|unregisterScene|startEngine|disposeScene|disposeEngine|onBeforeRender|loadGltf|loadEnvironment|loadTexture2D|setThinInstances|setThinInstanceColors)\b/g;
+
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // control-char markers that never appear in source code
+  var M0 = String.fromCharCode(1), M1 = String.fromCharCode(2);
+  var STR_RE = /"[^"\n]*"|'[^'\n]*'|`[^`\n]*`/g;
+  var COM_RE = /\/\/[^\n]*/g;
+  var HOLD_RE = new RegExp(M0 + '(\\d+)' + M1, 'g');
+
+  function highlight(raw) {
+    var store = [];
+    function hold(html) { store.push(html); return M0 + (store.length - 1) + M1; }
+    var s = esc(raw);
+    // strings FIRST, so a "//" inside a URL is never mistaken for a comment
+    s = s.replace(STR_RE, function (m) { return hold('<span class="tk-str">' + m + '</span>'); });
+    // line comments
+    s = s.replace(COM_RE, function (m) { return hold('<span class="tk-com">' + m + '</span>'); });
+    // keywords, then API function names (letters only)
+    s = s.replace(KW, '<span class="tk-kw">$1</span>');
+    s = s.replace(FN, '<span class="tk-fn">$1</span>');
+    // restore protected segments
+    s = s.replace(HOLD_RE, function (_, i) { return store[Number(i)]; });
+    return s;
+  }
+
+  var blocks = document.querySelectorAll("pre code");
+  for (var i = 0; i < blocks.length; i++) {
+    var el = blocks[i];
+    el.setAttribute("data-raw", el.textContent);
+    el.innerHTML = highlight(el.textContent);
+  }
+
+  /* ---------- copy buttons ---------- */
+  var copies = document.querySelectorAll(".copy");
+  for (var j = 0; j < copies.length; j++) {
+    copies[j].addEventListener("click", function (e) {
+      var btn = e.currentTarget;
+      var code = btn.closest(".code").querySelector("pre code");
+      var text = code.getAttribute("data-raw") || code.textContent;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = "コピーしました ✓";
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = "コピー"; btn.classList.remove("done"); }, 1600);
+      }).catch(function () {
+        btn.textContent = "失敗";
+        setTimeout(function () { btn.textContent = "コピー"; }, 1600);
+      });
+    });
+  }
+
+  /* ---------- hero wireframe (Canvas 2D, dependency-free) ---------- */
+  var canvas = document.getElementById("wire");
+  if (canvas && canvas.getContext) {
+    var ctx = canvas.getContext("2d");
+    var W = canvas.width, H = canvas.height;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // build a UV sphere wireframe (segments 16) — echoes sample 01
+    var SEG = 16, RINGS = 12, R = 150;
+    var verts = [];
+    for (var r = 0; r <= RINGS; r++) {
+      var phi = Math.PI * r / RINGS;
+      for (var s = 0; s < SEG; s++) {
+        var th = 2 * Math.PI * s / SEG;
+        verts.push([
+          R * Math.sin(phi) * Math.cos(th),
+          R * Math.cos(phi),
+          R * Math.sin(phi) * Math.sin(th)
+        ]);
+      }
+    }
+    function idx(r, s) { return r * SEG + (s % SEG); }
+    var edges = [];
+    for (var r2 = 0; r2 <= RINGS; r2++) {
+      for (var s2 = 0; s2 < SEG; s2++) {
+        if (r2 < RINGS) edges.push([idx(r2, s2), idx(r2 + 1, s2)]);
+        if (r2 > 0 && r2 < RINGS) edges.push([idx(r2, s2), idx(r2, s2 + 1)]);
+      }
+    }
+
+    function accent() { return getComputedStyle(root).getPropertyValue("--accent").trim() || "#e24a32"; }
+    function support() { return getComputedStyle(root).getPropertyValue("--support").trim() || "#2563eb"; }
+
+    function draw(t) {
+      var ay = t * 0.00035, ax = 0.42;
+      var cy = Math.cos(ay), sy = Math.sin(ay), cx = Math.cos(ax), sx = Math.sin(ax);
+      ctx.clearRect(0, 0, W, H);
+      var acc = accent(), sup = support();
+      var pts = new Array(verts.length);
+      for (var v = 0; v < verts.length; v++) {
+        var x = verts[v][0], y = verts[v][1], z = verts[v][2];
+        var x1 = x * cy - z * sy, z1 = x * sy + z * cy;         // yaw
+        var y2 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;       // pitch
+        var persp = 620 / (620 + z2);
+        pts[v] = [W / 2 + x1 * persp, H / 2 + y2 * persp, z2];
+      }
+      for (var e = 0; e < edges.length; e++) {
+        var a = pts[edges[e][0]], b = pts[edges[e][1]];
+        var depth = (a[2] + b[2]) / 2;
+        var alpha = 0.18 + 0.55 * ((depth + R) / (2 * R));
+        ctx.strokeStyle = (depth > 0 ? acc : sup);
+        ctx.globalAlpha = Math.max(0.08, Math.min(0.85, alpha));
+        ctx.lineWidth = depth > 0 ? 1.25 : 0.8;
+        ctx.beginPath();
+        ctx.moveTo(a[0], a[1]);
+        ctx.lineTo(b[0], b[1]);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    if (reduce) {
+      draw(1800);
+    } else {
+      var start = null;
+      function loop(ts) {
+        if (start === null) start = ts;
+        draw(ts - start);
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+  }
+})();
+</script>
+</body>
+</html>
