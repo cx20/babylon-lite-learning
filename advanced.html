@@ -170,6 +170,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
   <section id="pbr">
     <div class="section-head"><span class="eyebrow">04 — 質感</span><h2>PBR・IBL・発光</h2></div>
     <p>Tetris のつやつやしたブロックのような質感は、<strong>PBR マテリアル</strong>と<strong>画像ベースの環境光（IBL）</strong>の組み合わせで作ります。<code class="inl">loadEnvironment()</code> で環境（映り込み）を読み込み、<code class="inl">createPbrMaterial()</code> の <code class="inl">metallicFactor</code> / <code class="inl">roughnessFactor</code> で金属感・つや、<code class="inl">emissiveColor</code> で<strong>自発光（光るブロック）</strong>を表現します。</p>
+    <div class="callout warn"><span class="ci" aria-hidden="true">⚠️</span><div><h4><code class="inl">brdfUrl</code> は必須</h4><p><code class="inl">loadEnvironment()</code> は BRDF LUT 画像を必ず読み込みます。<code class="inl">brdfUrl</code> を省くと「<code class="inl">The source image could not be decoded</code>」エラーになります。Playground では <code class="inl">brdfUrl: "/brdf-lut.png"</code> が使えます。</p></div></div>
     <div class="sample">
       <div class="sample-head"><span class="st-num">04</span><h3>金属球と発光ブロック</h3></div>
       <p class="sample-note">環境（IBL）を読み込み、つやのある金属球と、<code class="inl">emissiveColor</code> で光る箱を並べます。</p>
@@ -190,6 +191,7 @@ async function main() {
 
     // 画像ベースの環境光（IBL）。金属やつやの映り込みに必須（Tetris の質感）
     await loadEnvironment(scene, "https://assets.babylonjs.com/core/environments/environmentSpecular.env", {
+        brdfUrl: "/brdf-lut.png", // BRDF LUT は必須。Playground がこのパスで配信している
         skyboxUrl: "https://assets.babylonjs.com/core/environments/backgroundSkybox.dds",
         skyboxSize: 1000,
     });

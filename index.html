@@ -461,6 +461,7 @@ async function main() {
 
     // 画像ベースの環境光（IBL）＋ スカイボックス＋ 地面
     await loadEnvironment(scene, "https://assets.babylonjs.com/core/environments/environmentSpecular.env", {
+        brdfUrl: "/brdf-lut.png", // BRDF LUT は必須。Playground がこのパスで配信している
         skyboxUrl: "https://assets.babylonjs.com/core/environments/backgroundSkybox.dds",
         skyboxSize: 1000,
     });
