@@ -5,398 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="WebGPU専用の軽量3Dエンジン Babylon Lite の初学者向け入門ページ。図解と、Lite Playgroundで動くサンプルコード付き。">
 <title>Babylon Lite 入門 — WebGPU 3Dエンジンをはじめから</title>
-<style>
-  :root {
-    --bg: #EEF1F5;
-    --surface: #FFFFFF;
-    --surface-2: #F7F9FB;
-    --ink: #171A21;
-    --ink-soft: #3A4150;
-    --muted: #697485;
-    --border: #DCE1E9;
-    --accent: #E24A32;
-    --accent-ink: #C13A24;
-    --support: #2563EB;
-    --tip: #2E9E6B;
-    --warn: #C57A1E;
-    /* code chrome — dark "viewport" in both themes */
-    --code-bg: #0D1117;
-    --code-head: #161C25;
-    --code-border: #232B36;
-    --code-ink: #C9D2DE;
-    --code-com: #6B7688;
-    --code-str: #7FD1B9;
-    --code-kw: #FF8A6B;
-    --code-fn: #77A6FF;
-    --code-dot: #2E3947;
-
-    --font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
-    --font-mono: "SFMono-Regular", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "Noto Sans Mono", monospace;
-
-    --maxw: 940px;
-    --radius: 14px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0C0F14;
-      --surface: #141922;
-      --surface-2: #1A2029;
-      --ink: #E7EBF1;
-      --ink-soft: #B7BFCC;
-      --muted: #7E8899;
-      --border: #242C38;
-      --accent: #FF6A4D;
-      --accent-ink: #FF8064;
-      --support: #6AA0FF;
-      --tip: #3FBE86;
-      --warn: #E7A24E;
-    }
-  }
-  :root[data-theme="light"] {
-    --bg: #EEF1F5; --surface: #FFFFFF; --surface-2: #F7F9FB;
-    --ink: #171A21; --ink-soft: #3A4150; --muted: #697485; --border: #DCE1E9;
-    --accent: #E24A32; --accent-ink: #C13A24; --support: #2563EB;
-    --tip: #2E9E6B; --warn: #C57A1E;
-  }
-  :root[data-theme="dark"] {
-    --bg: #0C0F14; --surface: #141922; --surface-2: #1A2029;
-    --ink: #E7EBF1; --ink-soft: #B7BFCC; --muted: #7E8899; --border: #242C38;
-    --accent: #FF6A4D; --accent-ink: #FF8064; --support: #6AA0FF;
-    --tip: #3FBE86; --warn: #E7A24E;
-  }
-
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font-sans);
-    line-height: 1.75;
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* ---------- top bar ---------- */
-  .topbar {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px;
-    padding: 12px clamp(16px, 4vw, 40px);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
-  .brand .glyph {
-    width: 22px; height: 22px; border-radius: 6px;
-    background: conic-gradient(from 210deg, var(--accent), #ff9a5a, var(--support), var(--accent));
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent) inset;
-  }
-  .brand small { color: var(--muted); font-weight: 500; letter-spacing: 0; }
-  .topbar-actions { display: flex; align-items: center; gap: 8px; }
-  .btn {
-    font: inherit; font-weight: 600; font-size: 14px;
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 8px 14px; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--surface); color: var(--ink);
-    cursor: pointer; text-decoration: none; transition: transform .12s ease, border-color .12s ease, background .12s ease;
-  }
-  .btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
-  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  :root[data-theme="dark"] .btn-primary, .btn-primary { color: #fff; }
-  .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.04); border-color: var(--accent); }
-  .icon-btn {
-    width: 38px; height: 38px; padding: 0; justify-content: center;
-    font-size: 16px;
-  }
-
-  /* ---------- layout ---------- */
-  main { max-width: var(--maxw); margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
-  section { scroll-margin-top: 76px; }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--accent-ink);
-    margin: 0 0 12px;
-  }
-  .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); border-radius: 2px; }
-  h2 { font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
-  h3 { font-size: 1.18rem; letter-spacing: -0.01em; margin: 0 0 8px; }
-  p { margin: 0 0 16px; max-width: 68ch; color: var(--ink-soft); }
-  p.lead { font-size: 1.08rem; color: var(--ink); }
-  a { color: var(--accent-ink); text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 3px; }
-  a:hover { text-decoration-color: var(--accent); }
-  code.inl {
-    font-family: var(--font-mono); font-size: 0.86em;
-    background: var(--surface-2); border: 1px solid var(--border);
-    padding: 1px 6px; border-radius: 6px; color: var(--ink);
-    white-space: nowrap;
-  }
-  .divider { height: 1px; background: var(--border); border: 0; margin: 64px 0; }
-  .section-head { margin-bottom: 28px; }
-
-  /* ---------- hero ---------- */
-  .hero {
-    position: relative; overflow: hidden;
-    border-bottom: 1px solid var(--border);
-    background:
-      radial-gradient(120% 90% at 82% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
-      radial-gradient(100% 80% at 8% 120%, color-mix(in srgb, var(--support) 12%, transparent), transparent 55%);
-  }
-  .hero-inner {
-    max-width: var(--maxw); margin: 0 auto;
-    padding: clamp(48px, 8vw, 92px) clamp(16px, 4vw, 40px) clamp(44px, 7vw, 76px);
-    display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 36px; align-items: center;
-  }
-  .hero h1 {
-    font-size: clamp(2.1rem, 6.2vw, 3.5rem); line-height: 1.06; letter-spacing: -0.035em;
-    margin: 14px 0 18px; text-wrap: balance;
-  }
-  .hero h1 .lite { color: var(--accent); }
-  .hero p { font-size: 1.12rem; max-width: 40ch; }
-  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 26px; }
-  .badge {
-    font-size: 12.5px; font-weight: 600; letter-spacing: .01em;
-    padding: 6px 12px; border-radius: 999px;
-    background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft);
-    display: inline-flex; align-items: center; gap: 7px;
-  }
-  .badge b { color: var(--ink); font-weight: 700; }
-  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-  .badge .dot.b { background: var(--support); }
-  .badge .dot.g { background: var(--tip); }
-  .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
-  .hero-visual {
-    position: relative; aspect-ratio: 1 / 1; width: 100%;
-    border-radius: 20px; overflow: hidden;
-    border: 1px solid var(--border);
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--ink) 4%, var(--surface)), var(--surface));
-    box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--ink) 40%, transparent);
-  }
-  .hero-visual canvas { display: block; width: 100%; height: 100%; }
-  .hero-visual .vlabel {
-    position: absolute; left: 12px; bottom: 11px;
-    font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em;
-    color: var(--muted);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .hero-visual .vlabel .live { width: 7px; height: 7px; border-radius: 50%; background: var(--tip); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tip) 22%, transparent); }
-
-  /* ---------- toc ---------- */
-  .toc {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    margin: 40px 0 8px;
-  }
-  .toc a {
-    font-size: 13.5px; font-weight: 600; text-decoration: none;
-    color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border);
-    padding: 7px 13px; border-radius: 999px; transition: border-color .12s, color .12s;
-  }
-  .toc a:hover { color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
-  .toc a .n { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
-
-  /* ---------- cards ---------- */
-  .grid { display: grid; gap: 16px; }
-  .grid.g2 { grid-template-columns: repeat(2, 1fr); }
-  .grid.g4 { grid-template-columns: repeat(2, 1fr); }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 22px;
-  }
-  .card .kicker {
-    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-    color: var(--accent-ink); letter-spacing: .02em; margin-bottom: 10px;
-    display: inline-flex; align-items: center; gap: 8px;
-  }
-  .card .kicker .num {
-    display: inline-grid; place-items: center; width: 24px; height: 24px;
-    border-radius: 7px; background: color-mix(in srgb, var(--accent) 14%, transparent);
-    color: var(--accent-ink); font-weight: 700;
-  }
-  .card h3 { margin-bottom: 6px; }
-  .card p { margin: 0; font-size: 0.96rem; }
-
-  /* comparison */
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .compare > div { padding: 22px; }
-  .compare .c-bjs { background: var(--surface-2); border-right: 1px solid var(--border); }
-  .compare .c-lite { background: var(--surface); }
-  .compare h4 { margin: 0 0 14px; font-size: 0.95rem; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
-  .compare .tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
-  .compare .tag.a { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-ink); }
-  .compare .tag.n { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
-  .compare ul { margin: 0; padding-left: 18px; }
-  .compare li { margin-bottom: 9px; color: var(--ink-soft); font-size: 0.95rem; }
-  .compare li b { color: var(--ink); }
-
-  /* ---------- lifecycle ---------- */
-  .lifecycle { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin: 6px 0 4px; }
-  .lc-step {
-    flex: 1 1 160px; min-width: 150px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px 16px 18px; position: relative;
-  }
-  .lc-step .lc-n { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-  .lc-step .lc-fn { font-family: var(--font-mono); font-size: 0.92rem; font-weight: 700; color: var(--accent-ink); margin: 4px 0 6px; word-break: break-all; }
-  .lc-step .lc-d { font-size: 0.86rem; color: var(--ink-soft); }
-  .lc-arrow { align-self: center; color: var(--muted); font-size: 20px; }
-  @media (max-width: 720px) { .lc-arrow { transform: rotate(90deg); } }
-
-  /* ---------- code ---------- */
-  .sample { margin: 26px 0 8px; }
-  .sample-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-  .sample-head .st-num {
-    font-family: var(--font-mono); font-weight: 700; font-size: 13px;
-    color: #fff; background: var(--accent); padding: 3px 9px; border-radius: 7px;
-  }
-  .sample-head h3 { margin: 0; }
-  .sample-note { font-size: 0.95rem; }
-  .code {
-    border-radius: 12px; overflow: hidden; border: 1px solid var(--code-border);
-    background: var(--code-bg);
-    box-shadow: 0 18px 40px -26px color-mix(in srgb, #000 60%, transparent);
-  }
-  .code-head {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; background: var(--code-head);
-    border-bottom: 1px solid var(--code-border);
-  }
-  .code-head .dots { display: flex; gap: 6px; }
-  .code-head .dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--code-dot); display: block; }
-  .code-head .file {
-    font-family: var(--font-mono); font-size: 12px; color: #8894a4; letter-spacing: .02em;
-    margin-left: 4px;
-  }
-  .code-head .spacer { flex: 1; }
-  .code-head .lang { font-family: var(--font-mono); font-size: 11px; color: #6b7688; text-transform: uppercase; letter-spacing: .08em; }
-  .copy {
-    font: inherit; font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
-    color: #aeb8c6; background: transparent; border: 1px solid #2b3542; border-radius: 7px;
-    padding: 5px 10px; cursor: pointer; transition: all .12s ease;
-  }
-  .copy:hover { color: #fff; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 24%, transparent); }
-  .copy.done { color: var(--tip); border-color: var(--tip); }
-  pre { margin: 0; overflow-x: auto; }
-  pre code {
-    display: block; font-family: var(--font-mono); font-size: 13.2px; line-height: 1.7;
-    color: var(--code-ink); padding: 18px 18px 20px; tab-size: 4;
-    white-space: pre;
-  }
-  .tk-com { color: var(--code-com); font-style: italic; }
-  .tk-str { color: var(--code-str); }
-  .tk-kw { color: var(--code-kw); }
-  .tk-fn { color: var(--code-fn); }
-
-  /* ---------- callouts ---------- */
-  .callout {
-    display: flex; gap: 14px; padding: 18px 20px; border-radius: 12px;
-    border: 1px solid var(--border); background: var(--surface);
-    border-left: 3px solid var(--accent); margin: 20px 0;
-  }
-  .callout .ci { font-size: 20px; line-height: 1.4; }
-  .callout.tip { border-left-color: var(--tip); }
-  .callout.warn { border-left-color: var(--warn); }
-  .callout h4 { margin: 0 0 4px; font-size: 0.98rem; }
-  .callout p { margin: 0; font-size: 0.94rem; }
-  .callout p + p { margin-top: 8px; }
-
-  /* ---------- table ---------- */
-  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
-  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.92rem; }
-  thead th {
-    text-align: left; font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
-    color: var(--muted); font-weight: 700; padding: 12px 16px; background: var(--surface-2);
-    border-bottom: 1px solid var(--border);
-  }
-  tbody td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  tbody tr:last-child td { border-bottom: 0; }
-  tbody tr:hover { background: var(--surface-2); }
-  td .m { font-family: var(--font-mono); font-size: 0.86rem; }
-  td.bjs .m { color: var(--muted); }
-  td.lite .m { color: var(--accent-ink); font-weight: 600; }
-
-  /* gotchas */
-  .gotchas { display: grid; gap: 12px; }
-  .gotcha { display: flex; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
-  .gotcha .gi { font-family: var(--font-mono); font-weight: 700; color: var(--accent-ink); flex: none; }
-  .gotcha div > b { display: block; margin-bottom: 3px; }
-  .gotcha p { margin: 0; font-size: 0.93rem; }
-
-  /* next steps / links */
-  .links { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .link-card {
-    display: flex; flex-direction: column; gap: 4px;
-    padding: 18px 20px; border: 1px solid var(--border); border-radius: 12px;
-    background: var(--surface); text-decoration: none; color: var(--ink);
-    transition: border-color .12s, transform .12s;
-  }
-  .link-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); transform: translateY(-2px); }
-  .link-card .lc-t { font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .link-card .lc-t .ar { color: var(--accent); transition: transform .12s; }
-  .link-card:hover .lc-t .ar { transform: translateX(3px); }
-  .link-card .lc-s { font-size: 0.88rem; color: var(--muted); }
-
-  /* ---------- diagrams (inline SVG, theme-aware) ---------- */
-  .figure {
-    margin: 24px 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--surface-2); padding: 22px 20px 16px;
-  }
-  .figure .svg-scroll { overflow-x: auto; }
-  .figure svg { display: block; width: 100%; min-width: 540px; height: auto; }
-  .figure figcaption {
-    margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);
-    font-size: 0.86rem; color: var(--muted); text-align: center;
-  }
-  .figure figcaption b { color: var(--ink-soft); }
-  .dg { font-family: var(--font-sans); }
-  .dg-mono { font-family: var(--font-mono); }
-  .dg text { fill: var(--ink); }
-  .dg .t-mut { fill: var(--muted); }
-  .dg .t-soft { fill: var(--ink-soft); }
-  .dg .t-acc { fill: var(--accent-ink); }
-  .dg .t-sup { fill: var(--support); }
-  .dg .t-tip { fill: var(--tip); }
-  .dg .t-warn { fill: var(--warn); }
-  .dg .t-inv { fill: #fff; }
-  .dg .fill-warn-soft { fill: color-mix(in srgb, var(--warn) 15%, transparent); stroke: var(--warn); }
-  .dg .s-warn { stroke: var(--warn); }
-  .dg .s-tip { stroke: var(--tip); }
-  .dg .surface { fill: var(--surface); stroke: var(--border); }
-  .dg .surface2 { fill: var(--surface-2); stroke: var(--border); }
-  .dg .fill-acc { fill: var(--accent); }
-  .dg .fill-acc-soft { fill: color-mix(in srgb, var(--accent) 15%, transparent); stroke: var(--accent); }
-  .dg .fill-sup-soft { fill: color-mix(in srgb, var(--support) 14%, transparent); stroke: var(--support); }
-  .dg .fill-tip-soft { fill: color-mix(in srgb, var(--tip) 15%, transparent); stroke: var(--tip); }
-  .dg .fill-none { fill: none; }
-  .dg .s-border { stroke: var(--border); }
-  .dg .s-acc { stroke: var(--accent); }
-  .dg .s-sup { stroke: var(--support); }
-  .dg .s-mut { stroke: var(--muted); }
-  .dg .s-dash { stroke-dasharray: 5 5; }
-  .dg .cap { font-size: 13px; font-weight: 700; }
-  .dg .lbl { font-size: 12.5px; }
-  .dg .sm { font-size: 11px; }
-  .dg .code-t { font-family: var(--font-mono); font-size: 12px; }
-
-  footer {
-    border-top: 1px solid var(--border); margin-top: 20px;
-    padding: 30px clamp(16px,4vw,40px) 48px; color: var(--muted); font-size: 0.86rem;
-  }
-  footer .fw { max-width: var(--maxw); margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
-  footer a { color: var(--ink-soft); }
-
-  @media (max-width: 780px) {
-    .hero-inner { grid-template-columns: 1fr; }
-    .hero-visual { max-width: 320px; }
-    .grid.g2, .grid.g4, .compare, .links { grid-template-columns: 1fr; }
-    .compare .c-bjs { border-right: 0; border-bottom: 1px solid var(--border); }
-  }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="topbar">
@@ -476,68 +85,7 @@
     </div>
 
     <figure class="figure">
-      <div class="svg-scroll">
-      <svg class="dg" viewBox="0 0 720 260" role="img" aria-labelledby="fig1t fig1d">
-        <title id="fig1t">ツリーシェイクの仕組み</title>
-        <desc id="fig1d">import した関数だけがバンドルに含まれ、使わない機能は取り除かれる図</desc>
-
-        <!-- ① あなたのコード -->
-        <rect class="surface" x="16" y="30" width="212" height="140" rx="11"/>
-        <text class="cap t-soft" x="28" y="53">① あなたのコード</text>
-        <text class="code-t t-acc" x="28" y="80">import {</text>
-        <text class="code-t t-acc" x="40" y="100">createEngine,</text>
-        <text class="code-t t-acc" x="40" y="118">createSphere,</text>
-        <text class="code-t t-acc" x="40" y="136">createHemisphericLight,</text>
-        <text class="code-t t-acc" x="28" y="156">}</text>
-
-        <!-- arrow 1 -->
-        <text class="sm t-mut" x="252" y="92" text-anchor="middle">import</text>
-        <line class="s-mut" x1="230" y1="100" x2="272" y2="100"/>
-        <polygon class="t-mut" points="280,100 270,95 270,105"/>
-
-        <!-- ② バンドラ -->
-        <rect class="fill-sup-soft" x="286" y="72" width="120" height="56" rx="11"/>
-        <text class="cap t-sup" x="346" y="98" text-anchor="middle">② バンドラ</text>
-        <text class="sm t-mut" x="346" y="116" text-anchor="middle">Vite / esbuild</text>
-
-        <!-- arrow 2 -->
-        <line class="s-mut" x1="408" y1="100" x2="450" y2="100"/>
-        <polygon class="t-mut" points="458,100 448,95 448,105"/>
-
-        <!-- ③ 出力バンドル -->
-        <rect class="fill-acc-soft" x="466" y="30" width="238" height="140" rx="11"/>
-        <text class="cap t-acc" x="478" y="53">③ 出力バンドル（極小）</text>
-        <g>
-          <rect class="fill-acc" x="478" y="66" width="102" height="38" rx="8"/>
-          <text class="lbl t-inv" x="529" y="90" text-anchor="middle">Engine</text>
-          <rect class="fill-acc" x="590" y="66" width="102" height="38" rx="8"/>
-          <text class="lbl t-inv" x="641" y="90" text-anchor="middle">Sphere</text>
-          <rect class="fill-acc" x="478" y="112" width="102" height="38" rx="8"/>
-          <text class="lbl t-inv" x="529" y="136" text-anchor="middle">Light</text>
-          <rect class="fill-acc" x="590" y="112" width="102" height="38" rx="8"/>
-          <text class="lbl t-inv" x="641" y="136" text-anchor="middle">PBR</text>
-        </g>
-
-        <!-- unused modules dropped -->
-        <text class="sm t-mut" x="16" y="200">バンドルに入らない（使っていないので取り除かれる）:</text>
-        <g class="dg-mono">
-          <rect class="fill-none s-border s-dash" x="16" y="212" width="95" height="30" rx="7"/>
-          <text class="sm t-mut" x="63" y="231" text-anchor="middle">HDR</text>
-          <rect class="fill-none s-border s-dash" x="119" y="212" width="95" height="30" rx="7"/>
-          <text class="sm t-mut" x="166" y="231" text-anchor="middle">影 Shadow</text>
-          <rect class="fill-none s-border s-dash" x="222" y="212" width="95" height="30" rx="7"/>
-          <text class="sm t-mut" x="269" y="231" text-anchor="middle">物理 Physics</text>
-          <rect class="fill-none s-border s-dash" x="325" y="212" width="95" height="30" rx="7"/>
-          <text class="sm t-mut" x="372" y="231" text-anchor="middle">スプライト</text>
-          <rect class="fill-none s-border s-dash" x="428" y="212" width="95" height="30" rx="7"/>
-          <text class="sm t-mut" x="475" y="231" text-anchor="middle">アニメ</text>
-          <rect class="fill-none s-border s-dash" x="531" y="212" width="95" height="30" rx="7"/>
-          <text class="sm t-mut" x="578" y="231" text-anchor="middle">テキスト</text>
-          <rect class="fill-none s-border s-dash" x="634" y="212" width="70" height="30" rx="7"/>
-          <text class="sm t-mut" x="669" y="231" text-anchor="middle">…他</text>
-        </g>
-      </svg>
-      </div>
+      <div class="svg-scroll"><div class="mermaid" id="mmd-treeshake"></div></div>
       <figcaption><b>ツリーシェイク：</b>実際に <code class="inl">import</code> した機能だけがバンドルに残り、使わない機能は自動で取り除かれます。だから Lite は小さくなります。</figcaption>
     </figure>
 
@@ -613,57 +161,7 @@
     </div>
 
     <figure class="figure">
-      <div class="svg-scroll">
-      <svg class="dg" viewBox="0 0 720 268" role="img" aria-labelledby="fig2t fig2d">
-        <title id="fig2t">シーンが所有者になる仕組み</title>
-        <desc id="fig2d">単独で作ったカメラ・ライト・メッシュを addToScene でシーンに渡すと、シーンが所有する図</desc>
-
-        <text class="cap t-mut" x="16" y="16">単独の「データ」として作る</text>
-
-        <!-- camera data -->
-        <rect class="surface" x="16" y="24" width="224" height="52" rx="10"/>
-        <text class="lbl t-soft" x="28" y="45">カメラ（データ）</text>
-        <text class="code-t t-acc" x="28" y="66">createArcRotateCamera()</text>
-
-        <!-- light data -->
-        <rect class="surface" x="16" y="88" width="224" height="52" rx="10"/>
-        <text class="lbl t-soft" x="28" y="109">ライト（データ）</text>
-        <text class="code-t t-acc" x="28" y="130">createHemisphericLight()</text>
-
-        <!-- mesh data (geometry + material) -->
-        <rect class="surface" x="16" y="152" width="224" height="100" rx="10"/>
-        <text class="lbl t-soft" x="28" y="173">メッシュ（データ）</text>
-        <text class="code-t t-acc" x="28" y="192">createSphere()</text>
-        <rect class="fill-sup-soft" x="28" y="204" width="96" height="36" rx="8"/>
-        <text class="sm t-sup" x="76" y="226" text-anchor="middle">形状 Geometry</text>
-        <text class="cap t-mut" x="130" y="227">＋</text>
-        <rect class="fill-acc-soft" x="146" y="204" width="88" height="36" rx="8"/>
-        <text class="sm t-acc" x="190" y="226" text-anchor="middle">見た目 Material</text>
-
-        <!-- arrows -->
-        <text class="sm t-mut" x="336" y="44" text-anchor="middle">scene.camera =</text>
-        <line class="s-mut" x1="244" y1="50" x2="424" y2="69"/>
-        <polygon class="t-mut" points="432,71 421,66 422,77"/>
-        <text class="sm t-acc" x="336" y="110" text-anchor="middle">addToScene()</text>
-        <line class="s-acc" x1="244" y1="114" x2="424" y2="117"/>
-        <polygon class="fill-acc" points="432,117 422,112 422,122"/>
-        <text class="sm t-acc" x="336" y="198" text-anchor="middle">addToScene()</text>
-        <line class="s-acc" x1="244" y1="202" x2="424" y2="185"/>
-        <polygon class="fill-acc" points="432,183 422,182 423,193"/>
-
-        <!-- scene box (owner) -->
-        <rect class="fill-tip-soft" x="430" y="16" width="274" height="236" rx="12"/>
-        <text class="cap t-soft" x="444" y="40">Scene ▸ シーンだけが内容を知る</text>
-        <rect class="surface" x="444" y="52" width="246" height="34" rx="8"/>
-        <text class="lbl t-soft" x="456" y="74">カメラ</text>
-        <rect class="surface" x="444" y="100" width="246" height="34" rx="8"/>
-        <text class="lbl t-soft" x="456" y="122">ライト</text>
-        <rect class="surface" x="444" y="148" width="246" height="60" rx="8"/>
-        <text class="lbl t-soft" x="456" y="170">メッシュ</text>
-        <text class="sm t-mut" x="456" y="194">形状 ＋ 見た目 をまとめて保持</text>
-        <text class="sm t-mut" x="444" y="234">→ registerScene() → startEngine() で描画</text>
-      </svg>
-      </div>
+      <div class="svg-scroll"><div class="mermaid" id="mmd-ownership"></div></div>
       <figcaption><b>シーンが唯一の所有者：</b>部品は単独のデータとして作り、<code class="inl">addToScene()</code>（カメラは <code class="inl">scene.camera=</code>）でシーンに渡します。<b>シーンに入っていないものは描画されません。</b></figcaption>
     </figure>
   </section>
@@ -704,39 +202,7 @@
     </div>
 
     <figure class="figure">
-      <div class="svg-scroll">
-      <svg class="dg dg-mono" viewBox="0 0 720 208" role="img" aria-labelledby="fig3t fig3d">
-        <title id="fig3t">registerScene の順序</title>
-        <desc id="fig3d">登録の前に追加すれば描画され、登録の後に追加すると描画されないことを示す図</desc>
-
-        <!-- correct order -->
-        <text class="cap t-tip" x="16" y="20">✓ 正しい順序</text>
-        <rect class="surface" x="16" y="30" width="118" height="34" rx="8"/>
-        <text class="sm t-soft" x="75" y="52" text-anchor="middle">createEngine()</text>
-        <line class="s-mut" x1="138" y1="47" x2="156" y2="47"/><polygon class="t-mut" points="162,47 154,43 154,51"/>
-        <rect class="surface" x="166" y="30" width="150" height="34" rx="8"/>
-        <text class="sm t-soft" x="241" y="52" text-anchor="middle">addToScene() ×n</text>
-        <line class="s-mut" x1="320" y1="47" x2="338" y2="47"/><polygon class="t-mut" points="344,47 336,43 336,51"/>
-        <rect class="fill-acc-soft" x="348" y="30" width="150" height="34" rx="8"/>
-        <text class="sm t-acc" x="423" y="52" text-anchor="middle">registerScene()</text>
-        <line class="s-mut" x1="502" y1="47" x2="520" y2="47"/><polygon class="t-mut" points="526,47 518,43 518,51"/>
-        <rect class="surface" x="530" y="30" width="118" height="34" rx="8"/>
-        <text class="sm t-soft" x="589" y="52" text-anchor="middle">startEngine()</text>
-        <text class="cap t-tip" x="662" y="52">✓</text>
-
-        <line class="s-border s-dash" x1="16" y1="88" x2="704" y2="88"/>
-
-        <!-- common mistake -->
-        <text class="cap t-warn" x="16" y="120">✗ ありがちな間違い</text>
-        <rect class="fill-acc-soft" x="16" y="130" width="150" height="34" rx="8"/>
-        <text class="sm t-acc" x="91" y="152" text-anchor="middle">registerScene()</text>
-        <line class="s-warn" x1="170" y1="147" x2="188" y2="147"/><polygon class="fill-warn-soft" points="194,147 186,143 186,151"/>
-        <rect class="fill-warn-soft s-dash" x="198" y="130" width="176" height="34" rx="8"/>
-        <text class="sm t-warn" x="286" y="152" text-anchor="middle">addToScene(mesh)</text>
-        <text class="cap t-warn" x="388" y="152">✗ 描画されない</text>
-        <text class="sm t-mut" x="16" y="190">「登録」より後に追加したものはシーンに反映されません。追加はすべて registerScene() の前に。</text>
-      </svg>
-      </div>
+      <div class="svg-scroll"><div class="mermaid" id="mmd-lifecycle"></div></div>
       <figcaption><b>登録は 1 回のバリア：</b>すべての <code class="inl">addToScene()</code> を済ませてから <code class="inl">registerScene()</code> → <code class="inl">startEngine()</code>。この順序を外すと「表示されない」原因になります。</figcaption>
     </figure>
   </section>
@@ -797,47 +263,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
 
     <p style="margin-top:20px">最初のサンプルで使う <code class="inl">createArcRotateCamera(α, β, radius, target)</code> は、<strong>注視点（target）のまわりをカメラが回る</strong>タイプのカメラです。4つの引数の意味は次の図のとおりです。</p>
     <figure class="figure">
-      <div class="svg-scroll">
-      <svg class="dg" viewBox="0 0 720 290" role="img" aria-labelledby="fig4t fig4d">
-        <title id="fig4t">ArcRotateCamera の引数</title>
-        <desc id="fig4d">alpha は横回転、beta は仰角、radius は距離、target は注視点であることを示す図</desc>
-
-        <!-- Y axis -->
-        <line class="s-mut s-dash" x1="250" y1="72" x2="250" y2="270"/>
-        <text class="sm t-mut" x="250" y="64" text-anchor="middle">Y軸</text>
-
-        <!-- orbit ellipse -->
-        <ellipse class="fill-none s-sup s-dash" cx="250" cy="192" rx="150" ry="44"/>
-
-        <!-- radius line + camera -->
-        <line class="s-acc" x1="250" y1="182" x2="356" y2="138"/>
-        <text class="sm t-acc" x="284" y="150">radius（距離）</text>
-        <rect class="surface2 s-sup" x="352" y="112" width="56" height="30" rx="7"/>
-        <text class="sm t-sup" x="380" y="131" text-anchor="middle">カメラ</text>
-
-        <!-- target -->
-        <circle class="fill-acc" cx="250" cy="182" r="13"/>
-        <text class="sm t-soft" x="250" y="212" text-anchor="middle">target（注視点）</text>
-
-        <!-- beta arc -->
-        <path class="fill-none s-sup" d="M 250 142 A 40 40 0 0 1 286 165"/>
-        <text class="sm t-sup" x="298" y="132">β 仰角</text>
-
-        <!-- alpha arc -->
-        <path class="fill-none s-acc" d="M 188 240 Q 250 272 312 240"/>
-        <polygon class="fill-acc" points="312,240 302,238 306,248"/>
-        <text class="sm t-acc" x="250" y="264" text-anchor="middle">α（Y軸まわりの横回転）</text>
-
-        <!-- legend -->
-        <rect class="surface" x="440" y="80" width="264" height="150" rx="11"/>
-        <text class="code-t t-soft" x="452" y="104">createArcRotateCamera(</text>
-        <text class="code-t" x="466" y="128"><tspan class="t-acc">α</tspan><tspan class="t-mut">, </tspan><tspan class="t-mut">// 横回転（Y軸まわり）</tspan></text>
-        <text class="code-t" x="466" y="150"><tspan class="t-sup">β</tspan><tspan class="t-mut">, </tspan><tspan class="t-mut">// 仰角（上下の角度）</tspan></text>
-        <text class="code-t" x="466" y="172"><tspan class="t-soft">radius</tspan><tspan class="t-mut">, // 距離</tspan></text>
-        <text class="code-t" x="466" y="194"><tspan class="t-soft">target</tspan><tspan class="t-mut">  // 注視点</tspan></text>
-        <text class="code-t t-soft" x="452" y="216">)</text>
-      </svg>
-      </div>
+      <div class="svg-scroll"><img class="fig-img" src="assets/arc-rotate-camera.svg" alt="ArcRotateCamera の引数：alpha は横回転、beta は仰角、radius は距離、target は注視点"></div>
       <figcaption>サンプル 01 の <code class="inl">createArcRotateCamera(-Math.PI/2, Math.PI/2.5, 4, {x:0,y:0,z:0})</code> は「原点を中心に、距離 4 の位置から少し見下ろす」カメラです。実行後、マウスのドラッグで <b>α</b>・<b>β</b> が変化します。</figcaption>
     </figure>
 
@@ -1296,6 +722,126 @@ main().catch((err) =&gt; console.error(err));</code></pre>
     }
   }
 })();
+</script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/+esm";
+
+  var root = document.documentElement;
+  function cssv(name, fb) {
+    var x = getComputedStyle(root).getPropertyValue(name).trim();
+    return x || fb;
+  }
+
+  var DEFS = {
+    "mmd-treeshake":
+      'flowchart LR\n' +
+      '  A["あなたのコード<br/>import した 4 関数<br/>createEngine・createSphere<br/>createHemisphericLight・createPbrMaterial"]\n' +
+      '  A -- import --> B["バンドラ<br/>(Vite / esbuild)"]\n' +
+      '  B -- 使う機能だけ残す --> C["出力バンドル（極小）<br/>Engine・Sphere・Light・PBR"]\n' +
+      '  B -. 使わない機能は除去 .-> X["HDR・影・物理・スプライト・テキスト …<br/>（バンドルに含まれない）"]\n' +
+      '  classDef keep fill:%%SURFACE%%,stroke:%%ACCENT%%,color:%%INK%%,stroke-width:2px;\n' +
+      '  classDef drop fill:%%SURFACE%%,stroke:%%MUTED%%,color:%%MUTED%%,stroke-dasharray:6;\n' +
+      '  class C keep;\n' +
+      '  class X drop;',
+    "mmd-ownership":
+      'flowchart LR\n' +
+      '  cam["カメラ（データ）<br/>createArcRotateCamera()"]\n' +
+      '  light["ライト（データ）<br/>createHemisphericLight()"]\n' +
+      '  mesh["メッシュ（データ）<br/>createSphere()<br/>＝ 形状 ＋ 見た目(Material)"]\n' +
+      '  subgraph S["Scene ▸ シーンだけが内容を知る"]\n' +
+      '    direction TB\n' +
+      '    s1["カメラ"]\n' +
+      '    s2["ライト"]\n' +
+      '    s3["メッシュ（形状＋見た目）"]\n' +
+      '  end\n' +
+      '  cam -- "scene.camera =" --> S\n' +
+      '  light -- addToScene --> S\n' +
+      '  mesh -- addToScene --> S\n' +
+      '  S --> R["registerScene() → startEngine() → 描画"]\n' +
+      '  classDef out fill:%%SURFACE%%,stroke:%%TIP%%,color:%%INK%%,stroke-width:2px;\n' +
+      '  class R out;',
+    "mmd-lifecycle":
+      'flowchart TB\n' +
+      '  subgraph OK["✓ 正しい順序"]\n' +
+      '    direction LR\n' +
+      '    a1["createEngine()"] --> a2["addToScene() ×n"] --> a3["registerScene()"] --> a4["startEngine()"] --> a5(["描画される"])\n' +
+      '  end\n' +
+      '  subgraph NG["✗ ありがちな間違い（登録の後に追加）"]\n' +
+      '    direction LR\n' +
+      '    b1["registerScene()"] --> b2["addToScene(mesh)"] -.-> b3(["描画されない"])\n' +
+      '  end\n' +
+      '  classDef ok fill:%%SURFACE%%,stroke:%%TIP%%,color:%%INK%%;\n' +
+      '  classDef bad fill:%%SURFACE%%,stroke:%%WARN%%,color:%%WARN%%;\n' +
+      '  class a5 ok;\n' +
+      '  class b2 bad;\n' +
+      '  class b3 bad;'
+  };
+
+  function tokens(def) {
+    return def
+      .replace(/%%SURFACE%%/g, cssv("--surface", "#ffffff"))
+      .replace(/%%ACCENT%%/g, cssv("--accent", "#e24a32"))
+      .replace(/%%TIP%%/g, cssv("--tip", "#2e9e6b"))
+      .replace(/%%WARN%%/g, cssv("--warn", "#c57a1e"))
+      .replace(/%%SUP%%/g, cssv("--support", "#2563eb"))
+      .replace(/%%MUTED%%/g, cssv("--muted", "#697485"))
+      .replace(/%%INK%%/g, cssv("--ink", "#171a21"))
+      .replace(/%%BORDER%%/g, cssv("--border", "#dce1e9"));
+  }
+
+  function config() {
+    var font = cssv("--font-sans", "system-ui, sans-serif");
+    return {
+      startOnLoad: false,
+      securityLevel: "loose",
+      theme: "base",
+      fontFamily: font,
+      flowchart: { htmlLabels: true, curve: "basis", padding: 10, useMaxWidth: true },
+      themeVariables: {
+        fontFamily: font,
+        fontSize: "14px",
+        background: cssv("--surface-2", "#f7f9fb"),
+        primaryColor: cssv("--surface", "#ffffff"),
+        primaryTextColor: cssv("--ink", "#171a21"),
+        primaryBorderColor: cssv("--border", "#dce1e9"),
+        secondaryColor: cssv("--surface-2", "#f7f9fb"),
+        tertiaryColor: cssv("--surface-2", "#f7f9fb"),
+        lineColor: cssv("--muted", "#697485"),
+        textColor: cssv("--ink", "#171a21"),
+        clusterBkg: "transparent",
+        clusterBorder: cssv("--border", "#dce1e9"),
+        edgeLabelBackground: cssv("--surface-2", "#f7f9fb")
+      }
+    };
+  }
+
+  var seq = 0, rendering = false;
+  async function renderAll() {
+    if (rendering) return;
+    rendering = true;
+    try {
+      mermaid.initialize(config());
+      for (var id in DEFS) {
+        var host = document.getElementById(id);
+        if (!host) continue;
+        try {
+          var res = await mermaid.render(id + "__r" + (++seq), tokens(DEFS[id]));
+          host.innerHTML = res.svg;
+        } catch (e) {
+          host.innerHTML = '<p class="mmd-err">図の描画に失敗しました（mermaid の読み込みを確認してください）。</p>';
+          console.error("[mermaid]", id, e);
+        }
+      }
+    } finally {
+      rendering = false;
+    }
+  }
+
+  renderAll();
+  // 再描画：テーマ切り替え（data-theme）や OS のダーク設定変更に追従
+  new MutationObserver(function () { renderAll(); })
+    .observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { renderAll(); });
 </script>
 </body>
 </html>

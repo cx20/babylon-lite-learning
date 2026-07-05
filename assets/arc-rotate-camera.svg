@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 290" role="img" aria-labelledby="t d">
+  <title id="t">ArcRotateCamera の引数</title>
+  <desc id="d">alpha は横回転、beta は仰角、radius は距離、target は注視点であることを示す図</desc>
+  <style>
+    text { fill: #171A21; font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif; }
+    .sm { font-size: 12px; }
+    .cap { font-size: 13px; font-weight: 700; }
+    .code-t { font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace; font-size: 12px; }
+    .t-mut { fill: #697485; } .t-soft { fill: #3A4150; } .t-acc { fill: #C13A24; } .t-sup { fill: #2563EB; }
+    .surface { fill: #FFFFFF; stroke: #DCE1E9; } .surface2 { fill: #F7F9FB; stroke: #DCE1E9; }
+    .fill-acc { fill: #E24A32; } .fill-none { fill: none; }
+    .s-mut { stroke: #697485; } .s-acc { stroke: #E24A32; } .s-sup { stroke: #2563EB; }
+    .s-dash { stroke-dasharray: 5 5; }
+    @media (prefers-color-scheme: dark) {
+      text { fill: #E7EBF1; }
+      .t-mut { fill: #7E8899; } .t-soft { fill: #B7BFCC; } .t-acc { fill: #FF8064; } .t-sup { fill: #6AA0FF; }
+      .surface { fill: #141922; stroke: #242C38; } .surface2 { fill: #1A2029; stroke: #242C38; }
+      .fill-acc { fill: #FF6A4D; }
+      .s-mut { stroke: #7E8899; } .s-acc { stroke: #FF6A4D; } .s-sup { stroke: #6AA0FF; }
+    }
+  </style>
+
+  <!-- Y axis -->
+  <line class="s-mut s-dash" x1="250" y1="72" x2="250" y2="270"/>
+  <text class="sm t-mut" x="250" y="64" text-anchor="middle">Y軸</text>
+
+  <!-- orbit ellipse -->
+  <ellipse class="fill-none s-sup s-dash" cx="250" cy="192" rx="150" ry="44"/>
+
+  <!-- radius line + camera -->
+  <line class="s-acc" x1="250" y1="182" x2="356" y2="138"/>
+  <text class="sm t-acc" x="284" y="150">radius（距離）</text>
+  <rect class="surface2 s-sup" x="352" y="112" width="56" height="30" rx="7"/>
+  <text class="sm t-sup" x="380" y="131" text-anchor="middle">カメラ</text>
+
+  <!-- target -->
+  <circle class="fill-acc" cx="250" cy="182" r="13"/>
+  <text class="sm t-soft" x="250" y="212" text-anchor="middle">target（注視点）</text>
+
+  <!-- beta arc -->
+  <path class="fill-none s-sup" d="M 250 142 A 40 40 0 0 1 286 165"/>
+  <text class="sm t-sup" x="298" y="132">β 仰角</text>
+
+  <!-- alpha arc -->
+  <path class="fill-none s-acc" d="M 188 240 Q 250 272 312 240"/>
+  <polygon class="fill-acc" points="312,240 302,238 306,248"/>
+  <text class="sm t-acc" x="250" y="264" text-anchor="middle">α（Y軸まわりの横回転）</text>
+
+  <!-- legend -->
+  <rect class="surface" x="440" y="80" width="264" height="150" rx="11"/>
+  <text class="code-t t-soft" x="452" y="104">createArcRotateCamera(</text>
+  <text class="code-t" x="466" y="128"><tspan class="t-acc">α</tspan><tspan class="t-mut">,  // 横回転（Y軸まわり）</tspan></text>
+  <text class="code-t" x="466" y="150"><tspan class="t-sup">β</tspan><tspan class="t-mut">,  // 仰角（上下の角度）</tspan></text>
+  <text class="code-t" x="466" y="172"><tspan class="t-soft">radius</tspan><tspan class="t-mut">, // 距離</tspan></text>
+  <text class="code-t" x="466" y="194"><tspan class="t-soft">target</tspan><tspan class="t-mut">  // 注視点</tspan></text>
+  <text class="code-t t-soft" x="452" y="216">)</text>
+</svg>
