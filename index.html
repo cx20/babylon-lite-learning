@@ -542,6 +542,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       <div class="gotcha"><span class="gi">04</span><div><b>カメラは明示的に割り当てる</b><p><code class="inl">scene.camera = camera</code> とするか、<code class="inl">createDefaultCamera(scene)</code>（自動割り当て）を使います。カメラがないと何も映りません。</p></div></div>
       <div class="gotcha"><span class="gi">05</span><div><b>ベクトルや色は「ただの配列」</b><p><code class="inl">Vector3</code> や <code class="inl">Color3</code> クラスはありません。位置は <code class="inl">[x, y, z]</code> か <code class="inl">{x, y, z}</code>、色は <code class="inl">[r, g, b]</code>（各 0〜1）で表します。</p></div></div>
       <div class="gotcha"><span class="gi">06</span><div><b>破棄は <code class="inl">dispose()</code> ではない</b><p>1つのメッシュを消すなら <code class="inl">removeFromScene(scene, mesh)</code>。全体を片付けるなら <code class="inl">disposeScene(scene)</code> と <code class="inl">disposeEngine(engine)</code> を使います。</p></div></div>
+      <div class="gotcha"><span class="gi">07</span><div><b>Babylon.js にあってもまだ無い機能がある</b><p>Babylon Lite は開発中のエンジンです。<code class="inl">InstancedMesh</code>（→ Thin Instances で代替）、GUI（2D/3D UI）、Particle System、WebXR/VR は本稿執筆時点では未対応です。使いたい機能がある場合は、事前に公式の<a href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">機能比較ページ</a>で対応状況を確認しましょう。</p></div></div>
     </div>
   </section>
 
@@ -569,6 +570,10 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       <a class="link-card" href="https://www.babylonjs.com/lite/" target="_blank" rel="noopener">
         <span class="lc-t">Babylon Lite 公式ページ <span class="ar" aria-hidden="true">→</span></span>
         <span class="lc-s">「どのエンジンを使うべきか」の判断材料と、全体像の紹介。</span>
+      </a>
+      <a class="link-card" href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">
+        <span class="lc-t">機能比較（Lite vs Babylon.js） <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">対応済み・部分対応・未対応がカテゴリ別に一覧できる公式ページ。</span>
       </a>
     </div>
   </section>
