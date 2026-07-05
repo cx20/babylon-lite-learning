@@ -15,12 +15,21 @@ python -m http.server 8000
 - WebGPU 対応ブラウザ（Chrome / Edge 113+ など）を推奨します。
 - ページ内のサンプルコードは、そのまま [Lite Playground](https://liteplayground.babylonjs.com/) に貼り付けて動かせます。
 
+## ページ
+
+| ページ | 内容 |
+|---|---|
+| `index.html` | **入門編** — 考え方とはじめのサンプル |
+| `advanced.html` | **応用編** — 公式デモで使う API（Thin Instances・PBR/IBL・影・ピッキング・WGSL・スプライト） |
+
 ## ファイル構成
 
 | ファイル | 役割 |
 |---|---|
-| `index.html` | ページ本体（マークアップ） |
-| `styles.css` | スタイル（ライト/ダーク両テーマ対応） |
+| `index.html` / `advanced.html` | 各ページのマークアップ |
+| `styles.css` | 共有スタイル（ライト/ダーク両テーマ対応） |
+| `app.js` | 共有スクリプト（テーマ切替・シンタックスハイライト・コピー・図の拡大モーダル） |
+| `diagrams.js` | 共有の mermaid レンダラ（各ページの `window.MERMAID_DEFS` を描画） |
 | `assets/arc-rotate-camera.svg` | カメラ引数の図（テーマ対応の外部 SVG） |
 
 ### 図解について

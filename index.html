@@ -12,6 +12,7 @@
   <div class="brand"><span class="glyph" aria-hidden="true"></span> Babylon&nbsp;Lite <small>入門ガイド</small></div>
   <div class="topbar-actions">
     <button class="btn icon-btn" id="themeToggle" aria-label="テーマを切り替え" title="テーマを切り替え">◐</button>
+    <a class="btn" href="advanced.html">応用編 →</a>
     <a class="btn btn-primary" href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">Playground を開く ↗</a>
   </div>
 </header>
@@ -598,75 +599,11 @@ main().catch((err) =&gt; console.error(err));</code></pre>
   </div>
 </div>
 
+<script src="app.js"></script>
 <script>
 (function () {
   "use strict";
-
-  /* ---------- theme toggle ---------- */
   var root = document.documentElement;
-  var toggle = document.getElementById("themeToggle");
-  toggle.addEventListener("click", function () {
-    var current = root.getAttribute("data-theme");
-    if (!current) {
-      // no explicit theme yet — infer from the OS preference
-      current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
-  });
-
-  /* ---------- syntax highlight ---------- */
-  var KW = /\b(import|from|const|let|var|await|async|function|return|new|as|of|in)\b/g;
-  var FN = /\b(createEngine|createSceneContext|createArcRotateCamera|createDefaultCamera|createFreeCamera|attachControl|createHemisphericLight|createDirectionalLight|createPointLight|createSpotLight|createSphere|createBox|createGround|createCylinder|createPlane|createStandardMaterial|createPbrMaterial|createGridMaterial|createTransformNode|addToScene|removeFromScene|registerScene|unregisterScene|startEngine|disposeScene|disposeEngine|onBeforeRender|loadGltf|loadEnvironment|loadTexture2D|setThinInstances|setThinInstanceColors)\b/g;
-
-  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
-  // control-char markers that never appear in source code
-  var M0 = String.fromCharCode(1), M1 = String.fromCharCode(2);
-  var STR_RE = /"[^"\n]*"|'[^'\n]*'|`[^`\n]*`/g;
-  var COM_RE = /\/\/[^\n]*/g;
-  var HOLD_RE = new RegExp(M0 + '(\\d+)' + M1, 'g');
-
-  function highlight(raw) {
-    var store = [];
-    function hold(html) { store.push(html); return M0 + (store.length - 1) + M1; }
-    var s = esc(raw);
-    // strings FIRST, so a "//" inside a URL is never mistaken for a comment
-    s = s.replace(STR_RE, function (m) { return hold('<span class="tk-str">' + m + '</span>'); });
-    // line comments
-    s = s.replace(COM_RE, function (m) { return hold('<span class="tk-com">' + m + '</span>'); });
-    // keywords, then API function names (letters only)
-    s = s.replace(KW, '<span class="tk-kw">$1</span>');
-    s = s.replace(FN, '<span class="tk-fn">$1</span>');
-    // restore protected segments
-    s = s.replace(HOLD_RE, function (_, i) { return store[Number(i)]; });
-    return s;
-  }
-
-  var blocks = document.querySelectorAll("pre code");
-  for (var i = 0; i < blocks.length; i++) {
-    var el = blocks[i];
-    el.setAttribute("data-raw", el.textContent);
-    el.innerHTML = highlight(el.textContent);
-  }
-
-  /* ---------- copy buttons ---------- */
-  var copies = document.querySelectorAll(".copy");
-  for (var j = 0; j < copies.length; j++) {
-    copies[j].addEventListener("click", function (e) {
-      var btn = e.currentTarget;
-      var code = btn.closest(".code").querySelector("pre code");
-      var text = code.getAttribute("data-raw") || code.textContent;
-      navigator.clipboard.writeText(text).then(function () {
-        btn.textContent = "コピーしました ✓";
-        btn.classList.add("done");
-        setTimeout(function () { btn.textContent = "コピー"; btn.classList.remove("done"); }, 1600);
-      }).catch(function () {
-        btn.textContent = "失敗";
-        setTimeout(function () { btn.textContent = "コピー"; }, 1600);
-      });
-    });
-  }
-
   /* ---------- hero wireframe (Canvas 2D, dependency-free) ---------- */
   var canvas = document.getElementById("wire");
   if (canvas && canvas.getContext) {
@@ -740,94 +677,10 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       requestAnimationFrame(loop);
     }
   }
-
-  /* ---------- 図の拡大モーダル（100% / 150% / 200% ・ ESC で閉じる） ---------- */
-  var modal = document.getElementById("figModal");
-  var modalBody = document.getElementById("figModalBody");
-  var scaleSel = document.getElementById("figModalScale");
-  var lastFocus = null, curItems = [];
-
-  function applyScale() {
-    var pct = parseInt(scaleSel.value, 10) || 150;
-    for (var i = 0; i < curItems.length; i++) {
-      var it = curItems[i];
-      it.node.style.maxWidth = "none";
-      it.node.style.width = Math.round(it.baseW * pct / 100) + "px";
-      it.node.style.height = "auto";
-    }
-  }
-
-  function openFig(fig, trigger) {
-    // 描画済みの図（mermaid の SVG は複数可・またはカメラの img）を複製して拡大表示
-    var svgs = fig.querySelectorAll(".mermaid svg");
-    var img = fig.querySelector("img.fig-img");
-    var srcs = svgs.length ? svgs : (img ? [img] : []);
-    if (!srcs.length) return;
-    lastFocus = trigger || null;
-    modalBody.innerHTML = "";
-    curItems = [];
-    for (var i = 0; i < srcs.length; i++) {
-      var w = srcs[i].getBoundingClientRect().width || 720;
-      var clone = srcs[i].cloneNode(true);
-      modalBody.appendChild(clone);
-      curItems.push({ node: clone, baseW: w });
-    }
-    scaleSel.value = "150";
-    applyScale();
-    showModal();
-  }
-
-  function showModal() {
-    modal.classList.add("is-open");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-    var closeBtn = modal.querySelector(".fig-modal__close");
-    if (closeBtn) closeBtn.focus();
-  }
-  function closeModal() {
-    if (!modal.classList.contains("is-open")) return;
-    modal.classList.remove("is-open");
-    modal.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-    modalBody.innerHTML = "";
-    curItems = [];
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
-  }
-
-  if (modal) {
-    scaleSel.addEventListener("change", applyScale);
-    modal.addEventListener("click", function (e) {
-      if (e.target.hasAttribute("data-fig-close")) closeModal();
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeModal();
-    });
-    // すべての図に「拡大」ボタンを追加
-    var figures = document.querySelectorAll(".figure");
-    for (var fi = 0; fi < figures.length; fi++) {
-      (function (fig) {
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "fig-zoom";
-        btn.textContent = "⤢ 拡大";
-        btn.setAttribute("aria-label", "この図を拡大表示する");
-        btn.addEventListener("click", function () { openFig(fig, btn); });
-        fig.appendChild(btn);
-      })(figures[fi]);
-    }
-  }
 })();
 </script>
-<script type="module">
-  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.16.0/+esm";
-
-  var root = document.documentElement;
-  function cssv(name, fb) {
-    var x = getComputedStyle(root).getPropertyValue(name).trim();
-    return x || fb;
-  }
-
-  var DEFS = {
+<script>
+  window.MERMAID_DEFS = {
     "mmd-treeshake":
       'flowchart LR\n' +
       '  A["あなたのコード<br/>import した 4 関数<br/>createEngine・createSphere<br/>createHemisphericLight・createPbrMaterial"]\n' +
@@ -873,72 +726,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       '  class b2 bad;\n' +
       '  class b3 bad;'
   };
-
-  function tokens(def) {
-    return def
-      .replace(/%%SURFACE%%/g, cssv("--surface", "#ffffff"))
-      .replace(/%%ACCENT%%/g, cssv("--accent", "#e24a32"))
-      .replace(/%%TIP%%/g, cssv("--tip", "#2e9e6b"))
-      .replace(/%%WARN%%/g, cssv("--warn", "#c57a1e"))
-      .replace(/%%SUP%%/g, cssv("--support", "#2563eb"))
-      .replace(/%%MUTED%%/g, cssv("--muted", "#697485"))
-      .replace(/%%INK%%/g, cssv("--ink", "#171a21"))
-      .replace(/%%BORDER%%/g, cssv("--border", "#dce1e9"));
-  }
-
-  function config() {
-    var font = cssv("--font-sans", "system-ui, sans-serif");
-    return {
-      startOnLoad: false,
-      securityLevel: "loose",
-      theme: "base",
-      fontFamily: font,
-      flowchart: { htmlLabels: true, curve: "basis", padding: 10, useMaxWidth: true },
-      themeVariables: {
-        fontFamily: font,
-        fontSize: "14px",
-        background: cssv("--surface-2", "#f7f9fb"),
-        primaryColor: cssv("--surface", "#ffffff"),
-        primaryTextColor: cssv("--ink", "#171a21"),
-        primaryBorderColor: cssv("--border", "#dce1e9"),
-        secondaryColor: cssv("--surface-2", "#f7f9fb"),
-        tertiaryColor: cssv("--surface-2", "#f7f9fb"),
-        lineColor: cssv("--muted", "#697485"),
-        textColor: cssv("--ink", "#171a21"),
-        clusterBkg: "transparent",
-        clusterBorder: cssv("--border", "#dce1e9"),
-        edgeLabelBackground: cssv("--surface-2", "#f7f9fb")
-      }
-    };
-  }
-
-  var seq = 0, rendering = false;
-  async function renderAll() {
-    if (rendering) return;
-    rendering = true;
-    try {
-      mermaid.initialize(config());
-      for (var id in DEFS) {
-        var host = document.getElementById(id);
-        if (!host) continue;
-        try {
-          var res = await mermaid.render(id + "__r" + (++seq), tokens(DEFS[id]));
-          host.innerHTML = res.svg;
-        } catch (e) {
-          host.innerHTML = '<p class="mmd-err">図の描画に失敗しました（mermaid の読み込みを確認してください）。</p>';
-          console.error("[mermaid]", id, e);
-        }
-      }
-    } finally {
-      rendering = false;
-    }
-  }
-
-  renderAll();
-  // 再描画：テーマ切り替え（data-theme）や OS のダーク設定変更に追従
-  new MutationObserver(function () { renderAll(); })
-    .observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { renderAll(); });
 </script>
+<script type="module" src="diagrams.js"></script>
 </body>
 </html>

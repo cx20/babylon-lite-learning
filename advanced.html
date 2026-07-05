@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Babylon Lite 応用編。公式デモ（Minecraft/Tetris/DOOM 等）で使われる Thin Instances・PBR/IBL・影・ピッキング・WGSLシェーダ・スプライト等の API を、Playgroundで動くサンプルとともに解説。">
+<link rel="stylesheet" href="styles.css">
+<title>Babylon Lite 応用編 — Demo で使う API を学ぶ</title>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="glyph" aria-hidden="true"></span> Babylon&nbsp;Lite <small>応用編</small></div>
+  <div class="topbar-actions">
+    <button class="btn icon-btn" id="themeToggle" aria-label="テーマを切り替え" title="テーマを切り替え">◐</button>
+    <a class="btn" href="index.html">← 入門編</a>
+    <a class="btn btn-primary" href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">Playground を開く ↗</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow">応用編 · Demo で使う API</span>
+      <h1>デモを<br><span class="lite">動かす技術</span>へ。</h1>
+      <p class="lead">公式デモ（Minecraft・Tetris・DOOM 風など）を支えるのは、<strong>大量描画・質感・影・入力</strong>の API です。入門編の次の一歩として、それらを Playground で動くコードとともに解説します。</p>
+      <div class="badge-row">
+        <span class="badge"><span class="dot"></span>Thin Instances</span>
+        <span class="badge"><span class="dot b"></span>PBR / IBL / 発光</span>
+        <span class="badge"><span class="dot g"></span>影・ピッキング・WGSL</span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#thin">サンプルを見る</a>
+        <a class="btn" href="index.html">入門編へ戻る</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <canvas id="wire" width="520" height="520"></canvas>
+      <div class="vlabel"><span class="live" aria-hidden="true"></span> thin-instanced field · 144 boxes</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <nav class="toc" aria-label="目次">
+    <a href="#overview"><span class="n">01</span>応用編について</a>
+    <a href="#demos"><span class="n">02</span>デモを支える技術</a>
+    <a href="#thin"><span class="n">03</span>Thin Instances</a>
+    <a href="#pbr"><span class="n">04</span>PBR・IBL・発光</a>
+    <a href="#shadow"><span class="n">05</span>影</a>
+    <a href="#pick"><span class="n">06</span>ピッキング</a>
+    <a href="#shader"><span class="n">07</span>WGSLシェーダ</a>
+    <a href="#sprite"><span class="n">08</span>スプライト・後処理</a>
+    <a href="#map"><span class="n">09</span>Demo × API 対応表</a>
+    <a href="#next"><span class="n">10</span>次のステップ</a>
+  </nav>
+
+  <hr class="divider" style="margin-top:36px">
+
+  <!-- 01 -->
+  <section id="overview">
+    <div class="section-head"><span class="eyebrow">01 — はじめに</span><h2>応用編について</h2></div>
+    <p class="lead">このページは<a href="index.html">入門編</a>の続きです。入門編の「作成 → 追加 → 登録 → 開始」を前提に、<strong>公式デモで実際に使われている API</strong> を中心に扱います。</p>
+    <p>題材は <a href="https://github.com/cx20/babylon-lite-demo-guide" target="_blank" rel="noopener">cx20/babylon-lite-demo-guide</a>（公式デモの日本語解説）で取り上げられている 6 つのデモ —— Minecraft 風ボクセル、Tetris、DOOM、Sandblox、マリオ風、Freeciv 風 —— です。これらを分解すると、繰り返し登場する少数の応用 API に行き着きます。</p>
+    <div class="callout tip" style="margin-top:20px">
+      <span class="ci" aria-hidden="true">🧩</span>
+      <div>
+        <h4>このページのサンプルについて</h4>
+        <p><b>03〜06（Thin Instances / PBR・IBL / 影 / ピッキング）</b>は Lite Playground にそのまま貼って動くサンプルです。<b>07〜08（WGSLシェーダ / スプライト・後処理）</b>は仕組みが大きいので、API の形を示す<b>参考コード</b>として掲載します（環境やアセットに応じた調整が必要です）。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 02 -->
+  <section id="demos">
+    <div class="section-head"><span class="eyebrow">02 — 全体像</span><h2>デモを支える技術</h2></div>
+    <p>多数の同じ形（ブロック・タイル・敵）を並べるデモでは、<strong>1個ずつ描くと描画命令が増えすぎて重くなります</strong>。応用編の主役はこれを解決する <b>Thin Instances</b> です。まずは考え方を掴みましょう。</p>
+    <figure class="figure">
+      <div class="svg-scroll"><div class="mermaid" id="mmd-approach"></div></div>
+      <figcaption><b>大量描画の要：</b>同じメッシュを 1000 個並べるとき、1 個ずつだと描画命令も 1000 回。Thin Instances なら「1 メッシュ＋1000 個分の行列」を <b>1 回</b>の命令で描けます。</figcaption>
+    </figure>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 03 thin -->
+  <section id="thin">
+    <div class="section-head"><span class="eyebrow">03 — 大量描画</span><h2>Thin Instances</h2></div>
+    <p><code class="inl">setThinInstances(mesh, matrices, count)</code> は、1 つのメッシュを <strong>それぞれ別の位置・向き・大きさ</strong>で大量に描く仕組みです。Minecraft のボクセル、Tetris のブロック、Sandblox の立方体など、応用デモの土台になります。</p>
+    <p><code class="inl">matrices</code> は <strong>1 インスタンスあたり 16 個の float（列優先の 4×4 ワールド行列）</strong>を並べた <code class="inl">Float32Array</code>。色を変えたいときは <code class="inl">setThinInstanceColors(mesh, colors)</code>（1 個あたり RGBA の 4 float）を使います。</p>
+    <figure class="figure">
+      <div class="svg-scroll"><div class="mermaid" id="mmd-thin"></div></div>
+      <figcaption>行列と色の配列を渡すだけ。GPU 側は 1 回の instanced draw で全インスタンスを描きます。</figcaption>
+    </figure>
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">03</span><h3>波打つ 196 個の箱（1 メッシュ）</h3></div>
+      <p class="sample-note">14×14＝196 個の箱を <b>1 つの元メッシュ</b>から描き、毎フレーム高さを波打たせます。行列を直接書き換えたら <code class="inl">flushThinInstances()</code> で変更を通知します。</p>
+      <div class="code">
+        <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">03-thin-instances.ts</span><span class="spacer"></span><span class="lang">typescript</span><button class="copy" type="button">コピー</button></div>
+        <pre><code>import {
+    createEngine, createSceneContext, createArcRotateCamera, attachControl,
+    createHemisphericLight, createDirectionalLight, createBox, createStandardMaterial,
+    setThinInstances, setThinInstanceColors, flushThinInstances,
+    addToScene, onBeforeRender, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    const camera = createArcRotateCamera(-Math.PI / 3, Math.PI / 3.2, 24, { x: 0, y: 0, z: 0 });
+    scene.camera = camera;
+    attachControl(camera, canvas, scene);
+
+    addToScene(scene, createHemisphericLight([0, 1, 0], 0.7));
+    addToScene(scene, createDirectionalLight([-1, -2, -1], 1.0));
+
+    // 「1つの元メッシュ」を大量に描くための箱
+    const box = createBox(engine);
+    box.material = createStandardMaterial();
+
+    // N×N 個。各インスタンスは 16 float（列優先の 4x4 ワールド行列）
+    const N = 14;
+    const count = N * N;
+    const matrices = new Float32Array(count * 16);
+    const colors = new Float32Array(count * 4);
+    let i = 0;
+    for (let x = 0; x &lt; N; x++) {
+        for (let z = 0; z &lt; N; z++) {
+            const o = i * 16;
+            // 単位行列 + 平行移動（列優先なので平行移動は 12,13,14 番目）
+            matrices[o + 0] = 1; matrices[o + 5] = 1; matrices[o + 10] = 1; matrices[o + 15] = 1;
+            matrices[o + 12] = (x - (N - 1) / 2) * 1.5;
+            matrices[o + 14] = (z - (N - 1) / 2) * 1.5;
+            // 位置に応じた色（RGBA）
+            const c = i * 4;
+            colors[c + 0] = x / N; colors[c + 1] = 0.45; colors[c + 2] = z / N; colors[c + 3] = 1;
+            i++;
+        }
+    }
+    setThinInstances(box, matrices, count);
+    setThinInstanceColors(box, colors);
+    addToScene(scene, box);
+
+    // 毎フレーム、各インスタンスの高さ(Y)を波打たせる
+    let t = 0;
+    onBeforeRender(scene, (deltaMs) =&gt; {
+        t += deltaMs * 0.002;
+        for (let k = 0; k &lt; count; k++) {
+            const o = k * 16;
+            matrices[o + 13] = Math.sin(t + matrices[o + 12] * 0.5 + matrices[o + 14] * 0.5) * 0.9;
+        }
+        flushThinInstances(box); // 行列を直接書き換えたので変更を通知
+    });
+
+    await registerScene(scene);
+    await startEngine(engine);
+}
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+    <div class="callout"><span class="ci" aria-hidden="true">⚡</span><div><h4>もっと速く：GPU カリング</h4><p>数万個規模になったら <code class="inl">enableThinInstanceGpuCulling(mesh)</code>（<code class="inl">registerScene()</code> の前に呼ぶ）で、画面外インスタンスを GPU 側で間引けます。</p></div></div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 04 pbr -->
+  <section id="pbr">
+    <div class="section-head"><span class="eyebrow">04 — 質感</span><h2>PBR・IBL・発光</h2></div>
+    <p>Tetris のつやつやしたブロックのような質感は、<strong>PBR マテリアル</strong>と<strong>画像ベースの環境光（IBL）</strong>の組み合わせで作ります。<code class="inl">loadEnvironment()</code> で環境（映り込み）を読み込み、<code class="inl">createPbrMaterial()</code> の <code class="inl">metallicFactor</code> / <code class="inl">roughnessFactor</code> で金属感・つや、<code class="inl">emissiveColor</code> で<strong>自発光（光るブロック）</strong>を表現します。</p>
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">04</span><h3>金属球と発光ブロック</h3></div>
+      <p class="sample-note">環境（IBL）を読み込み、つやのある金属球と、<code class="inl">emissiveColor</code> で光る箱を並べます。</p>
+      <div class="code">
+        <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">04-pbr-ibl-emissive.ts</span><span class="spacer"></span><span class="lang">typescript</span><button class="copy" type="button">コピー</button></div>
+        <pre><code>import {
+    createEngine, createSceneContext, createDefaultCamera, attachControl,
+    createHemisphericLight, createSphere, createBox, createPbrMaterial,
+    loadEnvironment, addToScene, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    addToScene(scene, createHemisphericLight([0, 1, 0], 0.3));
+
+    // 画像ベースの環境光（IBL）。金属やつやの映り込みに必須（Tetris の質感）
+    await loadEnvironment(scene, "https://assets.babylonjs.com/core/environments/environmentSpecular.env", {
+        skyboxUrl: "https://assets.babylonjs.com/core/environments/backgroundSkybox.dds",
+        skyboxSize: 1000,
+    });
+
+    // つやのある金属球（metallic=1, roughness 低め）
+    const metal = createSphere(engine, { segments: 32, diameter: 2 });
+    metal.position.set(-1.6, 0, 0);
+    metal.material = createPbrMaterial({
+        baseColorFactor: [0.9, 0.9, 0.95, 1], metallicFactor: 1, roughnessFactor: 0.15,
+    });
+    addToScene(scene, metal);
+
+    // 自ら発光する箱（emissiveColor）= 光るブロック
+    const glow = createBox(engine);
+    glow.position.set(1.6, 0, 0);
+    glow.material = createPbrMaterial({
+        baseColorFactor: [0.05, 0.05, 0.05, 1], roughnessFactor: 0.4, emissiveColor: [0.1, 0.6, 1.0],
+    });
+    addToScene(scene, glow);
+
+    // 読み込んだ内容に合わせてカメラを自動配置
+    const camera = createDefaultCamera(scene);
+    attachControl(camera, canvas, scene);
+
+    await registerScene(scene);
+    await startEngine(engine);
+}
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+    <div class="callout tip"><span class="ci" aria-hidden="true">✨</span><div><h4>まぶしさ（Bloom）を足すなら</h4><p><code class="inl">emissiveColor</code> は「明るい色」を出すだけです。光が<b>にじむ</b>効果は後処理の Bloom（08 節）で足します。</p></div></div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 05 shadow -->
+  <section id="shadow">
+    <div class="section-head"><span class="eyebrow">05 — 影</span><h2>影（ShadowGenerator）</h2></div>
+    <p>影は「影を落とす側（caster）」と「影を受ける側（receiver）」を指定します。方向性ライトには <code class="inl">createEsmDirectionalShadowGenerator()</code> を割り当て、<code class="inl">setShadowTaskCasterMeshes()</code> でキャスターを登録、受け手には <code class="inl">mesh.receiveShadows = true</code> を設定します。</p>
+    <div class="callout warn"><span class="ci" aria-hidden="true">⚠️</span><div><h4>登録関数が変わる</h4><p>影を使うシーンは <code class="inl">registerScene()</code> の代わりに <code class="inl">registerSceneWithShadowSupport()</code> で登録します（影のスケジューリングを組み込むため）。</p></div></div>
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">05</span><h3>地面に落ちる球の影</h3></div>
+      <p class="sample-note">方向性ライト＋ESM シャドウ。球が caster、地面が receiver です。</p>
+      <div class="code">
+        <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">05-shadows.ts</span><span class="spacer"></span><span class="lang">typescript</span><button class="copy" type="button">コピー</button></div>
+        <pre><code>import {
+    createEngine, createSceneContext, createArcRotateCamera, attachControl,
+    createHemisphericLight, createDirectionalLight,
+    createSphere, createGround, createStandardMaterial,
+    createEsmDirectionalShadowGenerator, setShadowTaskCasterMeshes,
+    addToScene, registerSceneWithShadowSupport, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    const camera = createArcRotateCamera(-Math.PI / 2.4, Math.PI / 3, 11, { x: 0, y: 0.5, z: 0 });
+    scene.camera = camera;
+    attachControl(camera, canvas, scene);
+
+    addToScene(scene, createHemisphericLight([0, 1, 0], 0.4));
+
+    // 影を落とす方向性ライト
+    const sun = createDirectionalLight([-1, -2, -1], 1.2);
+    addToScene(scene, sun);
+
+    // 影を受ける地面
+    const ground = createGround(engine, { width: 14, height: 14 });
+    const gm = createStandardMaterial();
+    gm.diffuseColor = [0.35, 0.37, 0.4];
+    ground.material = gm;
+    ground.receiveShadows = true;
+    addToScene(scene, ground);
+
+    // 影を落とす球
+    const ball = createSphere(engine, { diameter: 2.4 });
+    ball.position.set(0, 1.8, 0);
+    ball.material = createStandardMaterial();
+    addToScene(scene, ball);
+
+    // ESM（指数シャドウマップ）の影生成器をライトに割り当て、キャスターを登録
+    sun.shadowGenerator = createEsmDirectionalShadowGenerator(engine, sun, { mapSize: 1024, depthScale: 50 });
+    setShadowTaskCasterMeshes(sun.shadowGenerator, [ball]);
+
+    // 影シーンは registerScene ではなく registerSceneWithShadowSupport で登録する
+    await registerSceneWithShadowSupport(scene);
+    await startEngine(engine);
+}
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 06 pick -->
+  <section id="pick">
+    <div class="section-head"><span class="eyebrow">06 — 入力</span><h2>ピッキング（クリックで選択）</h2></div>
+    <p>Sandblox のブロック編集のように「クリックした 3D 物体を特定する」には <strong>GPU ピッキング</strong>を使います。<code class="inl">createGpuPicker(scene)</code> で作り、<code class="inl">picker.pickAsync(x, y)</code>（キャンバス左上からのピクセル座標）で <code class="inl">pickedMesh</code> や <code class="inl">pickedPoint</code> が得られます。</p>
+    <figure class="figure">
+      <div class="svg-scroll"><div class="mermaid" id="mmd-pick"></div></div>
+      <figcaption>各メッシュを「固有色」で一度描き、クリック位置の 1 ピクセルを読み戻して ID を復元 —— それが当たったメッシュです。</figcaption>
+    </figure>
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">06</span><h3>クリックした箱を赤くする</h3></div>
+      <p class="sample-note">実行後、箱をクリックすると色が変わります。実行中のマテリアル変更は <code class="inl">markMaterialUboDirty()</code> で通知します。</p>
+      <div class="code">
+        <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">06-picking.ts</span><span class="spacer"></span><span class="lang">typescript</span><button class="copy" type="button">コピー</button></div>
+        <pre><code>import {
+    createEngine, createSceneContext, createArcRotateCamera, attachControl,
+    createHemisphericLight, createBox, createStandardMaterial, markMaterialUboDirty,
+    createGpuPicker, addToScene, registerScene, startEngine,
+} from "@babylonjs/lite";
+
+async function main() {
+    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+    const engine = await createEngine(canvas);
+    const scene = createSceneContext(engine);
+
+    const camera = createArcRotateCamera(-Math.PI / 3, Math.PI / 3, 13, { x: 0, y: 0, z: 0 });
+    scene.camera = camera;
+    attachControl(camera, canvas, scene);
+
+    addToScene(scene, createHemisphericLight([0, 1, 0], 0.9));
+
+    // 3×3 に別々の箱を並べる
+    for (let x = -1; x &lt;= 1; x++) {
+        for (let z = -1; z &lt;= 1; z++) {
+            const b = createBox(engine);
+            b.position.set(x * 2.4, 0, z * 2.4);
+            const m = createStandardMaterial();
+            m.diffuseColor = [0.4, 0.5, 0.7];
+            b.material = m;
+            addToScene(scene, b);
+        }
+    }
+
+    // GPU ピッカー（Sandblox のブロック選択などに使う）
+    const picker = createGpuPicker(scene);
+
+    // クリックした箱を赤くする
+    canvas.addEventListener("pointerdown", async (ev) =&gt; {
+        const rect = canvas.getBoundingClientRect();
+        const info = await picker.pickAsync(ev.clientX - rect.left, ev.clientY - rect.top);
+        if (info.hit &amp;&amp; info.pickedMesh &amp;&amp; info.pickedMesh.material) {
+            info.pickedMesh.material.diffuseColor = [0.95, 0.3, 0.2];
+            markMaterialUboDirty(info.pickedMesh.material); // 実行中の色変更は dirty 通知が必要
+            console.log("picked point:", info.pickedPoint);
+        }
+    });
+
+    await registerScene(scene);
+    await startEngine(engine);
+}
+main().catch((err) =&gt; console.error(err));</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 07 shader -->
+  <section id="shader">
+    <div class="section-head"><span class="eyebrow">07 — カスタム描画</span><h2>WGSL シェーダ（ShaderMaterial）</h2></div>
+    <p>Minecraft の水面、マリオ風の CRT 効果、Freeciv の地形など、<strong>独自の見た目</strong>は自作シェーダで作ります。Babylon Lite のシェーダは <strong>WGSL 専用</strong>（GLSL 非対応）。<code class="inl">createShaderMaterial()</code> に頂点・フラグメントの WGSL を渡します。</p>
+    <ul>
+      <li>system uniform（<code class="inl">worldViewProjection</code> など）は WGSL 内で <code class="inl">shaderSystem.～</code></li>
+      <li>自作 uniform（<code class="inl">time</code> など）は <code class="inl">shaderUniforms.～</code>、値は <code class="inl">setShaderUniform()</code> で更新</li>
+      <li>頂点入力 <code class="inl">VertexInput</code> は <code class="inl">attributes</code> から自動生成、エントリ関数は <code class="inl">mainVertex</code> / <code class="inl">mainFragment</code></li>
+    </ul>
+    <div class="sample">
+      <div class="sample-head"><span class="st-num">07</span><h3>参考：頂点を揺らす WGSL シェーダの雛形</h3></div>
+      <p class="sample-note">API の形を示す参考コードです。<code class="inl">mesh.material = wave</code> として使い、毎フレーム <code class="inl">time</code> を更新します。</p>
+      <div class="code">
+        <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">07-shader-material.ts（参考）</span><span class="spacer"></span><span class="lang">typescript + wgsl</span><button class="copy" type="button">コピー</button></div>
+        <pre><code>import { createShaderMaterial, setShaderUniform } from "@babylonjs/lite";
+
+// Babylon Lite のシェーダは WGSL で書く（GLSL は非対応）。
+// system uniform（worldViewProjection 等）は shaderSystem.～、
+// カスタム uniform（time, color）は shaderUniforms.～ でアクセスする。
+const wave = createShaderMaterial({
+    name: "wave",
+    attributes: ["position", "normal"],
+    uniforms: ["worldViewProjection", { name: "time", type: "f32" }, { name: "color", type: "vec3&lt;f32&gt;" }],
+    vertexSource: `
+        struct VertexOutput {
+            @builtin(position) position: vec4&lt;f32&gt;,
+            @location(0) vNormal: vec3&lt;f32&gt;,
+        };
+        @vertex
+        fn mainVertex(input: VertexInput) -&gt; VertexOutput {
+            var out: VertexOutput;
+            var p = input.position;
+            p.y = p.y + sin(shaderUniforms.time + p.x * 3.0) * 0.15;
+            out.position = shaderSystem.worldViewProjection * vec4&lt;f32&gt;(p, 1.0);
+            out.vNormal = input.normal;
+            return out;
+        }
+    `,
+    fragmentSource: `
+        struct VertexOutput {
+            @builtin(position) position: vec4&lt;f32&gt;,
+            @location(0) vNormal: vec3&lt;f32&gt;,
+        };
+        @fragment
+        fn mainFragment(input: VertexOutput) -&gt; @location(0) vec4&lt;f32&gt; {
+            let light = clamp(dot(normalize(input.vNormal), normalize(vec3&lt;f32&gt;(0.4, 1.0, 0.3))), 0.2, 1.0);
+            return vec4&lt;f32&gt;(shaderUniforms.color * light, 1.0);
+        }
+    `,
+});
+
+// mesh.material = wave; addToScene(scene, mesh);
+// 毎フレーム：setShaderUniform(wave, "time", t) で時間を渡してアニメーション</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 08 sprite -->
+  <section id="sprite">
+    <div class="section-head"><span class="eyebrow">08 — 2D と仕上げ</span><h2>スプライトと後処理</h2></div>
+    <p><strong>スプライト</strong>は常にカメラを向く 2D の板です。DOOM の敵やアイテム、Freeciv のタイル絵に使われます。1 枚のテクスチャ（アトラス）を格子分割し、フレーム番号で絵柄を切り替えます。<strong>後処理（Bloom など）</strong>は描画後の画面全体にかけるエフェクトで、発光の「にじみ」を作ります。どちらも仕組みが大きいので、ここでは API の入口を示します。</p>
+    <div class="grid g2" style="margin-top:8px">
+      <div class="sample" style="margin:0">
+        <div class="sample-head"><h3 style="font-size:1.05rem">参考：スプライト</h3></div>
+        <div class="code">
+          <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">sprites.ts（参考）</span><span class="spacer"></span><button class="copy" type="button">コピー</button></div>
+          <pre><code>import { loadSpriteAtlas, createGridSpriteAtlas, createSpriteRenderer } from "@babylonjs/lite";
+
+// スプライト（2Dの板）= DOOM の敵/アイテム、Freeciv のタイル絵に使われる。
+// 1枚のテクスチャ（アトラス）を格子状に分割し、フレーム番号で絵柄を選ぶ。
+const atlas = await loadSpriteAtlas(engine, "https://example.com/sprites.png", {
+    // グリッド分割の指定など（詳細は docs: architecture/32-sprites）
+});
+
+const sr = createSpriteRenderer(engine, {
+    // レイヤー・ソート順などの設定
+});
+// レイヤーにスプライトを追加し、位置とフレーム番号を毎フレーム更新する。</code></pre>
+        </div>
+      </div>
+      <div class="sample" style="margin:0">
+        <div class="sample-head"><h3 style="font-size:1.05rem">参考：Bloom（後処理）</h3></div>
+        <div class="code">
+          <div class="code-head"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file">bloom.ts（参考）</span><span class="spacer"></span><button class="copy" type="button">コピー</button></div>
+          <pre><code>import { createBloomPostProcessTask } from "@babylonjs/lite";
+
+// Bloom（後処理）= 明るい部分をにじませて「まぶしさ」を出す。
+// Minecraft のグロー、Tetris の発光ブロックの仕上げに使われる。
+const bloom = createBloomPostProcessTask(
+    { name: "bloom", threshold: 0.8, weight: 0.6, kernel: 64 },
+    engine, scene,
+);
+// 後処理はシーンのフレームグラフに task として組み込む。
+// 詳細な配線は docs: architecture/29-post-process を参照。</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="callout"><span class="ci" aria-hidden="true">📚</span><div><h4>詳しくは公式ドキュメント</h4><p>スプライトは <code class="inl">architecture/32-sprites</code>、後処理は <code class="inl">architecture/29-post-process</code> に詳細があります（<a href="https://github.com/BabylonJS/Babylon-Lite/tree/master/docs/lite/architecture" target="_blank" rel="noopener">docs/lite/architecture</a>）。</p></div></div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 09 map -->
+  <section id="map">
+    <div class="section-head"><span class="eyebrow">09 — 早見表</span><h2>Demo × API 対応表</h2></div>
+    <p>各デモが主にどの API・技術を使っているかの対応表です（<a href="https://github.com/cx20/babylon-lite-demo-guide" target="_blank" rel="noopener">demo-guide</a> の解説に基づく整理）。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>デモ</th><th>主な技術</th><th>中心となる API</th></tr></thead>
+        <tbody>
+          <tr><td>Minecraft 風<br>ボクセル</td><td class="lite">大量描画 / カスタムシェーダ / 発光</td><td class="lite"><span class="m">setThinInstances, createShaderMaterial, emissiveColor</span></td></tr>
+          <tr><td>Tetris</td><td class="lite">PBR / HDR・IBL / 大量描画</td><td class="lite"><span class="m">createPbrMaterial, loadEnvironment, setThinInstances</span></td></tr>
+          <tr><td>Sandblox</td><td class="lite">大量描画 / ピッキング / 物理</td><td class="lite"><span class="m">setThinInstances, createGpuPicker</span></td></tr>
+          <tr><td>DOOM 風</td><td class="lite">スプライト / 物理・レイ</td><td class="lite"><span class="m">createSpriteRenderer, loadSpriteAtlas</span></td></tr>
+          <tr><td>マリオ風<br>プラットフォーマー</td><td class="lite">物理 / CRT シェーダ / スプライト</td><td class="lite"><span class="m">createShaderMaterial, sprites</span></td></tr>
+          <tr><td>Freeciv 風<br>アイソメtric</td><td class="lite">カスタムシェーダ / スプライト</td><td class="lite"><span class="m">createShaderMaterial, sprites</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;font-size:0.9rem;color:var(--muted)">※ 物理はエンジン内蔵の仕組み（<code class="inl">architecture/42-physics</code>）を利用。影は多くのデモで併用されます。</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- 10 next -->
+  <section id="next">
+    <div class="section-head"><span class="eyebrow">10 — 次の一歩</span><h2>次のステップ</h2></div>
+    <div class="links">
+      <a class="link-card" href="index.html">
+        <span class="lc-t">入門編に戻る <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">基本の考え方（作成→追加→登録→開始）とはじめのサンプル。</span>
+      </a>
+      <a class="link-card" href="https://liteplayground.babylonjs.com/" target="_blank" rel="noopener">
+        <span class="lc-t">Lite Playground <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">このページのサンプルを貼り付けて、動かして、書き換える。</span>
+      </a>
+      <a class="link-card" href="https://cx20.github.io/babylon-lite-demo-guide/" target="_blank" rel="noopener">
+        <span class="lc-t">デモ解説ガイド（cx20） <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">Minecraft/Tetris/DOOM など公式デモを内側から日本語解説。</span>
+      </a>
+      <a class="link-card" href="https://github.com/BabylonJS/Babylon-Lite/tree/master/docs/lite/architecture" target="_blank" rel="noopener">
+        <span class="lc-t">公式アーキテクチャ docs <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">thin-instances / pbr / sprites / shadow / picking など詳細。</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="fw">
+    <span>Babylon Lite 応用編 · Demo で使う API</span>
+    <span>出典: <a href="https://github.com/BabylonJS/Babylon-Lite" target="_blank" rel="noopener">Babylon-Lite docs</a> / <a href="https://github.com/cx20/babylon-lite-demo-guide" target="_blank" rel="noopener">cx20 demo-guide</a></span>
+  </div>
+</footer>
+
+<div class="fig-modal" id="figModal" aria-hidden="true">
+  <div class="fig-modal__backdrop" data-fig-close></div>
+  <div class="fig-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="figModalTitle">
+    <div class="fig-modal__bar">
+      <span class="fig-modal__title" id="figModalTitle">図の拡大表示</span>
+      <div class="fig-modal__ctrl">
+        <label for="figModalScale">表示倍率</label>
+        <select id="figModalScale">
+          <option value="100">100%</option>
+          <option value="150" selected>150%</option>
+          <option value="200">200%</option>
+        </select>
+        <button class="fig-modal__close" type="button" data-fig-close>✕ 閉じる（ESC）</button>
+      </div>
+    </div>
+    <div class="fig-modal__body" id="figModalBody"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var canvas = document.getElementById("wire");
+  if (!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext("2d");
+  var W = canvas.width, H = canvas.height;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // thin-instanced field を思わせる、波打つ箱グリッド
+  var N = 12, GAP = 24;
+  var base = [];
+  for (var x = 0; x < N; x++) for (var z = 0; z < N; z++) base.push([(x - (N - 1) / 2) * GAP, (z - (N - 1) / 2) * GAP]);
+  function accent() { return getComputedStyle(root).getPropertyValue("--accent").trim() || "#e24a32"; }
+  function support() { return getComputedStyle(root).getPropertyValue("--support").trim() || "#2563eb"; }
+
+  function draw(t) {
+    var ay = t * 0.0004, ax = 0.62;
+    var cy = Math.cos(ay), sy = Math.sin(ay), cx = Math.cos(ax), sx = Math.sin(ax);
+    ctx.clearRect(0, 0, W, H);
+    var acc = accent(), sup = support();
+    var arr = [];
+    for (var i = 0; i < base.length; i++) {
+      var px = base[i][0], pz = base[i][1];
+      var hy = Math.sin(t * 0.002 + px * 0.02 + pz * 0.02) * 28;
+      var x1 = px * cy - pz * sy, z1 = px * sy + pz * cy;
+      var y2 = hy * cx - z1 * sx, z2 = hy * sx + z1 * cx;
+      var persp = 360 / (360 + z2);
+      arr.push([W / 2 + x1 * persp, H / 2 + y2 * persp + 26, z2, hy, persp]);
+    }
+    arr.sort(function (a, b) { return a[2] - b[2]; });
+    for (var j = 0; j < arr.length; j++) {
+      var p = arr[j];
+      var s = Math.max(2.5, 8 * p[4]);
+      ctx.fillStyle = (p[3] > 0 ? acc : sup);
+      ctx.globalAlpha = Math.max(0.14, Math.min(0.92, 0.28 + 0.6 * p[4]));
+      ctx.fillRect(p[0] - s / 2, p[1] - s / 2, s, s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  if (reduce) {
+    draw(700);
+  } else {
+    var start = null;
+    requestAnimationFrame(function loop(ts) {
+      if (start === null) start = ts;
+      draw(ts - start);
+      requestAnimationFrame(loop);
+    });
+  }
+})();
+</script>
+<script>
+  window.MERMAID_DEFS = {
+    "mmd-approach":
+      'flowchart LR\n' +
+      '  subgraph SLOW["❌ 1個ずつ描く"]\n' +
+      '    direction TB\n' +
+      '    s1["mesh × 1000"] --> s2["draw call × 1000<br/>CPU がボトルネック"]\n' +
+      '  end\n' +
+      '  subgraph FAST["✓ Thin Instances"]\n' +
+      '    direction TB\n' +
+      '    f1["mesh × 1<br/>＋ 行列 × 1000"] --> f2["instanced draw × 1<br/>GPU で一括描画"]\n' +
+      '  end\n' +
+      '  classDef bad fill:%%SURFACE%%,stroke:%%WARN%%,color:%%WARN%%;\n' +
+      '  classDef good fill:%%SURFACE%%,stroke:%%TIP%%,color:%%INK%%,stroke-width:2px;\n' +
+      '  class s2 bad;\n' +
+      '  class f2 good;',
+    "mmd-thin":
+      'flowchart LR\n' +
+      '  A["Float32Array<br/>16 float × N<br/>（列優先 4x4 行列）"] -->|setThinInstances| B["mesh.thinInstances"]\n' +
+      '  C["Float32Array<br/>4 float × N（RGBA）"] -->|setThinInstanceColors| B\n' +
+      '  B -->|registerScene| D["GPU バッファ"]\n' +
+      '  D --> E["instanced draw × 1<br/>で N 個を描画"]\n' +
+      '  classDef hi fill:%%SURFACE%%,stroke:%%ACCENT%%,color:%%INK%%,stroke-width:2px;\n' +
+      '  class E hi;',
+    "mmd-pick":
+      'flowchart LR\n' +
+      '  P["pointerdown (x, y)"] -->|pickAsync| G["GpuPicker"]\n' +
+      '  G --> H["① ID パス<br/>各メッシュを固有色で描画"]\n' +
+      '  H --> I["② 1ピクセル読み戻し<br/>→ メッシュ ID を復元"]\n' +
+      '  I --> R["PickingInfo<br/>pickedMesh / pickedPoint"]\n' +
+      '  classDef hi fill:%%SURFACE%%,stroke:%%ACCENT%%,color:%%INK%%,stroke-width:2px;\n' +
+      '  class R hi;'
+  };
+</script>
+<script type="module" src="diagrams.js"></script>
+</body>
+</html>
