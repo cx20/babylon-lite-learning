@@ -162,6 +162,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       </div>
     </div>
     <div class="callout"><span class="ci" aria-hidden="true">⚡</span><div><h4>もっと速く：GPU カリング</h4><p>数万個規模になったら <code class="inl">enableThinInstanceGpuCulling(mesh)</code>（<code class="inl">registerScene()</code> の前に呼ぶ）で、画面外インスタンスを GPU 側で間引けます。</p></div></div>
+    <div class="callout warn"><span class="ci" aria-hidden="true">🚫</span><div><h4><code class="inl">InstancedMesh</code> は非対応</h4><p>Babylon.js の <code class="inl">InstancedMesh</code> API は Lite にはありません。大量描画は必ず Thin Instances（<code class="inl">setThinInstances</code> など）で行います（<a href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">公式機能比較</a>）。</p></div></div>
   </section>
 
   <hr class="divider">
@@ -454,6 +455,7 @@ const bloom = createBloomPostProcessTask(
         </div>
       </div>
     </div>
+    <div class="callout warn"><span class="ci" aria-hidden="true">⚡</span><div><h4>どちらも「部分対応」</h4><p>スプライトは Babylon.js の <code class="inl">SpriteManager</code> と同じ機能ではありません（レイヤー・ビルボード表示などの一部のみ）。後処理も Bloom などは使えますが、DOF・SSAO のような内蔵パイプラインはまだありません（<a href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">公式機能比較</a>）。</p></div></div>
     <div class="callout"><span class="ci" aria-hidden="true">📚</span><div><h4>詳しくは公式ドキュメント</h4><p>スプライトは <code class="inl">architecture/32-sprites</code>、後処理は <code class="inl">architecture/29-post-process</code> に詳細があります（<a href="https://github.com/BabylonJS/Babylon-Lite/tree/master/docs/lite/architecture" target="_blank" rel="noopener">docs/lite/architecture</a>）。</p></div></div>
   </section>
 
@@ -500,6 +502,10 @@ const bloom = createBloomPostProcessTask(
       <a class="link-card" href="https://github.com/BabylonJS/Babylon-Lite/tree/master/docs/lite/architecture" target="_blank" rel="noopener">
         <span class="lc-t">公式アーキテクチャ docs <span class="ar" aria-hidden="true">→</span></span>
         <span class="lc-s">thin-instances / pbr / sprites / shadow / picking など詳細。</span>
+      </a>
+      <a class="link-card" href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">
+        <span class="lc-t">機能比較（Lite vs Babylon.js） <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">GUI・Particle・WebXR など、まだ無い機能もここで確認できる。</span>
       </a>
     </div>
   </section>
