@@ -292,7 +292,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
   <!-- 06 pick -->
   <section id="pick">
     <div class="section-head"><span class="eyebrow">06 — 入力</span><h2>ピッキング（クリックで選択）</h2></div>
-    <p>Sandblox のブロック編集のように「クリックした 3D 物体を特定する」には <strong>GPU ピッキング</strong>を使います。<code class="inl">createGpuPicker(scene)</code> で作り、<code class="inl">picker.pickAsync(x, y)</code>（キャンバス左上からのピクセル座標）で <code class="inl">pickedMesh</code> や <code class="inl">pickedPoint</code> が得られます。</p>
+    <p>Sandblox のブロック編集のように「クリックした 3D 物体を特定する」には <strong>GPU ピッキング</strong>を使います。<code class="inl">createGpuPicker(scene)</code> で作り、<strong>独立関数</strong> <code class="inl">pickAsync(picker, x, y)</code>（キャンバス基準のピクセル座標）で <code class="inl">pickedMesh</code> や <code class="inl">pickedPoint</code> が得られます。<code class="inl">picker.pickAsync(...)</code> のようなメソッド呼び出しでは<strong>ない</strong>点に注意してください。</p>
     <figure class="figure">
       <div class="svg-scroll"><div class="mermaid" id="mmd-pick"></div></div>
       <figcaption>各メッシュを「固有色」で一度描き、クリック位置の 1 ピクセルを読み戻して ID を復元 —— それが当たったメッシュです。</figcaption>
@@ -305,7 +305,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
         <pre><code>import {
     createEngine, createSceneContext, createArcRotateCamera, attachControl,
     createHemisphericLight, createBox, createStandardMaterial, markMaterialUboDirty,
-    createGpuPicker, addToScene, registerScene, startEngine,
+    createGpuPicker, pickAsync, addToScene, registerScene, startEngine,
 } from "@babylonjs/lite";
 
 async function main() {
@@ -336,8 +336,8 @@ async function main() {
 
     // クリックした箱を赤くする
     canvas.addEventListener("pointerdown", async (ev) =&gt; {
-        const rect = canvas.getBoundingClientRect();
-        const info = await picker.pickAsync(ev.clientX - rect.left, ev.clientY - rect.top);
+        // pickAsync は独立関数。offsetX/offsetY はキャンバス基準の座標
+        const info = await pickAsync(picker, ev.offsetX, ev.offsetY);
         if (info.hit &amp;&amp; info.pickedMesh &amp;&amp; info.pickedMesh.material) {
             info.pickedMesh.material.diffuseColor = [0.95, 0.3, 0.2];
             markMaterialUboDirty(info.pickedMesh.material); // 実行中の色変更は dirty 通知が必要
