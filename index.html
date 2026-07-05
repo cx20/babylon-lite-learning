@@ -202,7 +202,7 @@
     </div>
 
     <figure class="figure">
-      <div class="svg-scroll"><div class="mermaid" id="mmd-lifecycle"></div></div>
+      <div class="svg-scroll"><div class="mermaid" id="mmd-lifecycle-ok"></div><div class="mermaid" id="mmd-lifecycle-ng"></div></div>
       <figcaption><b>登録は 1 回のバリア：</b>すべての <code class="inl">addToScene()</code> を済ませてから <code class="inl">registerScene()</code> → <code class="inl">startEngine()</code>。この順序を外すと「表示されない」原因になります。</figcaption>
     </figure>
   </section>
@@ -745,26 +745,33 @@ main().catch((err) =&gt; console.error(err));</code></pre>
   var modal = document.getElementById("figModal");
   var modalBody = document.getElementById("figModalBody");
   var scaleSel = document.getElementById("figModalScale");
-  var lastFocus = null, curNode = null, curBaseW = 0;
+  var lastFocus = null, curItems = [];
 
   function applyScale() {
-    if (!curNode) return;
     var pct = parseInt(scaleSel.value, 10) || 150;
-    curNode.style.maxWidth = "none";
-    curNode.style.width = Math.round(curBaseW * pct / 100) + "px";
-    curNode.style.height = "auto";
+    for (var i = 0; i < curItems.length; i++) {
+      var it = curItems[i];
+      it.node.style.maxWidth = "none";
+      it.node.style.width = Math.round(it.baseW * pct / 100) + "px";
+      it.node.style.height = "auto";
+    }
   }
 
   function openFig(fig, trigger) {
-    // 描画済みの図（mermaid の SVG、またはカメラの img）を複製して拡大表示
-    var src = fig.querySelector(".mermaid svg") || fig.querySelector("img.fig-img");
-    if (!src) return;
+    // 描画済みの図（mermaid の SVG は複数可・またはカメラの img）を複製して拡大表示
+    var svgs = fig.querySelectorAll(".mermaid svg");
+    var img = fig.querySelector("img.fig-img");
+    var srcs = svgs.length ? svgs : (img ? [img] : []);
+    if (!srcs.length) return;
     lastFocus = trigger || null;
-    curBaseW = src.getBoundingClientRect().width || 720;
-    var clone = src.cloneNode(true);
     modalBody.innerHTML = "";
-    modalBody.appendChild(clone);
-    curNode = clone;
+    curItems = [];
+    for (var i = 0; i < srcs.length; i++) {
+      var w = srcs[i].getBoundingClientRect().width || 720;
+      var clone = srcs[i].cloneNode(true);
+      modalBody.appendChild(clone);
+      curItems.push({ node: clone, baseW: w });
+    }
     scaleSel.value = "150";
     applyScale();
     showModal();
@@ -783,7 +790,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
     modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     modalBody.innerHTML = "";
-    curNode = null;
+    curItems = [];
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
@@ -848,19 +855,21 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       '  S --> R["registerScene() → startEngine() → 描画"]\n' +
       '  classDef out fill:%%SURFACE%%,stroke:%%TIP%%,color:%%INK%%,stroke-width:2px;\n' +
       '  class R out;',
-    "mmd-lifecycle":
-      'flowchart TB\n' +
+    "mmd-lifecycle-ok":
+      'flowchart LR\n' +
       '  subgraph OK["✓ 正しい順序"]\n' +
       '    direction LR\n' +
       '    a1["createEngine()"] --> a2["addToScene() ×n"] --> a3["registerScene()"] --> a4["startEngine()"] --> a5(["描画される"])\n' +
       '  end\n' +
+      '  classDef ok fill:%%SURFACE%%,stroke:%%TIP%%,color:%%INK%%;\n' +
+      '  class a5 ok;',
+    "mmd-lifecycle-ng":
+      'flowchart LR\n' +
       '  subgraph NG["✗ ありがちな間違い（登録の後に追加）"]\n' +
       '    direction LR\n' +
       '    b1["registerScene()"] --> b2["addToScene(mesh)"] -.-> b3(["描画されない"])\n' +
       '  end\n' +
-      '  classDef ok fill:%%SURFACE%%,stroke:%%TIP%%,color:%%INK%%;\n' +
       '  classDef bad fill:%%SURFACE%%,stroke:%%WARN%%,color:%%WARN%%;\n' +
-      '  class a5 ok;\n' +
       '  class b2 bad;\n' +
       '  class b3 bad;'
   };

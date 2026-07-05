@@ -340,6 +340,7 @@
   }
   .figure .svg-scroll { overflow-x: auto; }
   .figure .mermaid { display: flex; justify-content: center; min-width: 540px; padding: 4px 0; }
+  .figure .mermaid + .mermaid { margin-top: 10px; }
   .figure .mermaid svg { max-width: 100%; height: auto; }
   .figure .fig-img { display: block; width: 100%; min-width: 540px; height: auto; }
   .figure figcaption {
@@ -396,7 +397,8 @@
   .fig-modal__close:hover { filter: brightness(1.06); }
   .fig-modal__body {
     flex: 1; min-height: 0; overflow: auto; padding: 24px;
-    display: flex; align-items: flex-start; justify-content: safe center;
+    display: flex; flex-direction: column; gap: 20px;
+    align-items: safe center; justify-content: flex-start;
     background: var(--surface-2);
   }
   .fig-modal__body svg, .fig-modal__body img { display: block; height: auto; }
