@@ -224,6 +224,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       </div>
     </div>
     <div class="callout tip"><span class="ci" aria-hidden="true">✨</span><div><h4>まぶしさ（Bloom）を足すなら</h4><p><code class="inl">emissiveColor</code> は「明るい色」を出すだけです。光が<b>にじむ</b>効果は後処理の Bloom（08 節）で足します。</p></div></div>
+    <div class="callout"><span class="ci" aria-hidden="true">📦</span><div><h4>glTF 拡張は自動で有効になる</h4><p><code class="inl">loadGltf()</code> はモデルが使う拡張（Draco / meshopt 圧縮、KTX2 / WebP テクスチャ、クリアコートや透過（transmission）などの <code class="inl">KHR_materials_*</code> 系）を自動検出し、必要なデコーダだけを動的に読み込みます。使わないシーンにはバンドルコストがかかりません。対応一覧は公式<a href="https://doc.babylonjs.com/lite/03-porting-guide/" target="_blank" rel="noopener">移行ガイドの拡張表</a>にあります。</p></div></div>
   </section>
 
   <hr class="divider">
@@ -352,6 +353,7 @@ async function main() {
 main().catch((err) =&gt; console.error(err));</code></pre>
       </div>
     </div>
+    <div class="callout tip"><span class="ci" aria-hidden="true">🔁</span><div><h4>dirty 通知を自動化する：<code class="inl">enableMaterialTracking()</code></h4><p>毎回 <code class="inl">markMaterialUboDirty()</code> を呼ぶ代わりに、<code class="inl">enableMaterialTracking(material)</code> を一度呼ぶと、以降のプロパティ変更（<code class="inl">mat.diffuseColor[0] = 0.5</code> のような配列の書き換えも含む）を自動検知してくれます。オプトイン方式なので、import しないシーンにはバンドルコストがかかりません。</p></div></div>
   </section>
 
   <hr class="divider">
@@ -474,7 +476,7 @@ const bloom = createBloomPostProcessTask(
           <tr><td>Sandblox</td><td class="lite">大量描画 / ピッキング / 物理</td><td class="lite"><span class="m">setThinInstances, createGpuPicker</span></td></tr>
           <tr><td>DOOM 風</td><td class="lite">スプライト / 物理・レイ</td><td class="lite"><span class="m">createSpriteRenderer, loadSpriteAtlas</span></td></tr>
           <tr><td>マリオ風<br>プラットフォーマー</td><td class="lite">物理 / CRT シェーダ / スプライト</td><td class="lite"><span class="m">createShaderMaterial, sprites</span></td></tr>
-          <tr><td>Freeciv 風<br>アイソメtric</td><td class="lite">カスタムシェーダ / スプライト</td><td class="lite"><span class="m">createShaderMaterial, sprites</span></td></tr>
+          <tr><td>Freeciv 風<br>アイソメトリック</td><td class="lite">カスタムシェーダ / スプライト</td><td class="lite"><span class="m">createShaderMaterial, sprites</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -506,6 +508,10 @@ const bloom = createBloomPostProcessTask(
       <a class="link-card" href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">
         <span class="lc-t">機能比較（Lite vs Babylon.js） <span class="ar" aria-hidden="true">→</span></span>
         <span class="lc-s">GUI・Particle・WebXR など、まだ無い機能もここで確認できる。</span>
+      </a>
+      <a class="link-card" href="https://doc.babylonjs.com/lite/05-headless-null-engine/" target="_blank" rel="noopener">
+        <span class="lc-t">Headless（Null Engine） <span class="ar" aria-hidden="true">→</span></span>
+        <span class="lc-s">GPU なしで物理・アニメーションだけ回す実験的機能。サーバー側シミュレーションに。</span>
       </a>
     </div>
   </section>

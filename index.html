@@ -250,6 +250,13 @@ main().catch((err) =&gt; console.error(err));</code></pre>
         <p><b>Examples</b> ドロップダウンから完成済みのシーンを読み込み、少しずつ書き換えて Run —— これが API を覚える一番の近道です。<b>Save</b>（フロッピーアイコン）でパーマリンクが作られ、そのまま共有できます。</p>
       </div>
     </div>
+    <div class="callout">
+      <span class="ci" aria-hidden="true">🧰</span>
+      <div>
+        <h4>Playground はこれだけできる</h4>
+        <p>エディタ上部のタブで<b>複数ファイル</b>に分割でき、<code class="inl">import { ... } from "./scene"</code> のような相対 import が使えます。<code class="inl">@babylonjs/lite</code> 以外の <b>npm パッケージ</b>も import するだけで自動解決（esm.sh 経由）。<b>Engine version</b> ドロップダウンで nightly と公開リリースを切り替えられ、<b>Download</b> でプロジェクト一式を実行可能な zip として書き出せます。なお Playground はベータ版のため、細部は今後変わる可能性があります（<a href="https://doc.babylonjs.com/lite/04-playground/" target="_blank" rel="noopener">公式 Playground ガイド</a>）。</p>
+      </div>
+    </div>
   </section>
 
   <hr class="divider">
@@ -522,7 +529,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       <span class="ci" aria-hidden="true">🧭</span>
       <div>
         <h4>いきなり全部書き換えなくてもいい</h4>
-        <p>既存の Babylon.js シーンを一気に移植するのが大変なら、<code class="inl">@babylonjs/lite-compat</code> という互換レイヤーがあります。<code class="inl">new WebGPUEngine</code> などの見慣れたクラス API のまま Lite の WebGPU レンダラで動かし、あとから少しずつネイティブ API へ移せます。</p>
+        <p>既存の Babylon.js シーンを一気に移植するのが大変なら、<code class="inl">@babylonjs/lite-compat</code> という互換レイヤーがあります。<code class="inl">new WebGPUEngine</code> などの見慣れたクラス API のまま Lite の WebGPU レンダラで動かし、あとから少しずつネイティブ API へ移せます。API の対応関係をもっと詳しく知りたいときは、公式の<a href="https://doc.babylonjs.com/lite/03-porting-guide/" target="_blank" rel="noopener">移行ガイド（Porting Guide）</a>にフルサイズの対応表があります。</p>
       </div>
     </div>
   </section>
@@ -541,7 +548,7 @@ main().catch((err) =&gt; console.error(err));</code></pre>
       <div class="gotcha"><span class="gi">03</span><div><b><code class="inl">new</code> は使わない</b><p>すべてファクトリ関数で生成します。<code class="inl">new ArcRotateCamera(...)</code> ではなく <code class="inl">createArcRotateCamera(...)</code> です。</p></div></div>
       <div class="gotcha"><span class="gi">04</span><div><b>カメラは明示的に割り当てる</b><p><code class="inl">scene.camera = camera</code> とするか、<code class="inl">createDefaultCamera(scene)</code>（自動割り当て）を使います。カメラがないと何も映りません。</p></div></div>
       <div class="gotcha"><span class="gi">05</span><div><b>ベクトルや色は「ただの配列」</b><p><code class="inl">Vector3</code> や <code class="inl">Color3</code> クラスはありません。位置は <code class="inl">[x, y, z]</code> か <code class="inl">{x, y, z}</code>、色は <code class="inl">[r, g, b]</code>（各 0〜1）で表します。</p></div></div>
-      <div class="gotcha"><span class="gi">06</span><div><b>破棄は <code class="inl">dispose()</code> ではない</b><p>1つのメッシュを消すなら <code class="inl">removeFromScene(scene, mesh)</code>。全体を片付けるなら <code class="inl">disposeScene(scene)</code> と <code class="inl">disposeEngine(engine)</code> を使います。</p></div></div>
+      <div class="gotcha"><span class="gi">06</span><div><b>破棄は <code class="inl">dispose()</code> ではない</b><p>1つのメッシュを消すなら <code class="inl">removeFromScene(scene, mesh)</code>。全体を片付けるなら <code class="inl">disposeScene(scene)</code> と <code class="inl">disposeEngine(engine)</code> を使います。一時的に隠したいだけなら、削除せず <code class="inl">setSubtreeVisible(node, false)</code> で子ノードごと非表示にできます（GPU リソースはそのまま残るので、再表示が高速です）。</p></div></div>
       <div class="gotcha"><span class="gi">07</span><div><b>Babylon.js にあってもまだ無い機能がある</b><p>Babylon Lite は開発中のエンジンです。<code class="inl">InstancedMesh</code>（→ Thin Instances で代替）、GUI（2D/3D UI）、Particle System、WebXR/VR は本稿執筆時点では未対応です。使いたい機能がある場合は、事前に公式の<a href="https://doc.babylonjs.com/lite/02-feature-comparison/" target="_blank" rel="noopener">機能比較ページ</a>で対応状況を確認しましょう。</p></div></div>
     </div>
   </section>
